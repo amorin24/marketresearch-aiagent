@@ -19,7 +19,15 @@ const initializeFrameworks = async () => {
         const adapterName = file.replace('.js', '');
         const adapter = require(`../adapters/${file}`);
         
-        const envKey = `${adapterName.toUpperCase()}_ENABLED`;
+        let envKey;
+        if (adapterName === 'autoGenAdapter') {
+          envKey = 'AUTOGEN_ENABLED';
+        } else if (adapterName === 'langGraphAdapter') {
+          envKey = 'LANGGRAPH_ENABLED';
+        } else {
+          envKey = `${adapterName.toUpperCase()}_ENABLED`;
+        }
+        
         if (process.env[envKey] === 'true') {
           frameworkAdapters[adapterName] = adapter;
           logger.info(`Loaded framework adapter: ${adapterName}`);
