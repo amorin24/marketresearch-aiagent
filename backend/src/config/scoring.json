@@ -1,0 +1,40 @@
+{
+  "weights": {
+    "fundingStage": 0.3,
+    "marketBuzz": 0.3,
+    "strategicRelevance": 0.4
+  },
+  "fundingStage": {
+    "seed": 0.2,
+    "seriesA": 0.4,
+    "seriesB": 0.6,
+    "seriesC": 0.8,
+    "seriesD+": 1.0
+  },
+  "marketBuzz": {
+    "newsArticles": {
+      "weight": 0.5,
+      "timeDecay": {
+        "lastWeek": 1.0,
+        "lastMonth": 0.8,
+        "lastQuarter": 0.6,
+        "lastYear": 0.4,
+        "older": 0.2
+      }
+    },
+    "socialMentions": {
+      "weight": 0.5
+    }
+  },
+  "strategicRelevance": {
+    "focusAreas": {
+      "payments": 0.9,
+      "lending": 0.8,
+      "crypto": 0.7,
+      "wealthTech": 0.8,
+      "insurTech": 0.7,
+      "regTech": 0.6,
+      "banking": 0.9
+    }
+  }
+}
