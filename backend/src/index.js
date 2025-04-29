@@ -3,10 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const winston = require('winston');
 
-const companyRoutes = require('./controllers/companyController');
-const frameworkRoutes = require('./controllers/frameworkController');
-const configRoutes = require('./controllers/configController');
-
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -19,6 +15,12 @@ const logger = winston.createLogger({
     new winston.transports.File({ filename: 'combined.log' })
   ]
 });
+
+exports.logger = logger;
+
+const companyRoutes = require('./controllers/companyController');
+const frameworkRoutes = require('./controllers/frameworkController');
+const configRoutes = require('./controllers/configController');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -45,4 +47,4 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-module.exports = { app, logger };
+exports.app = app;
