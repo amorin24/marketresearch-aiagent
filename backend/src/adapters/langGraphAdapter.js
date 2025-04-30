@@ -110,28 +110,111 @@ const createGraph = (nodes) => {
 };
 
 /**
+ * Generate agent reasoning steps for a company
+ * @param {string} companyName - Name of the company
+ * @returns {Array} Agent reasoning steps
+ */
+const generateAgentSteps = (companyName) => {
+  const researchNodeSteps = [
+    {
+      id: 1,
+      name: 'initial_search',
+      description: `[Research Node] Initiating search for ${companyName} across financial databases and news sources.`,
+      completed: true,
+      result: `Located ${companyName} in multiple fintech databases. Company appears to be active in the alternative lending space with recent funding activity.`,
+      timestamp: new Date(Date.now() - 18000)
+    },
+    {
+      id: 2,
+      name: 'data_collection',
+      description: `[Research Node] Collecting comprehensive data about ${companyName} from verified sources.`,
+      completed: true,
+      result: `Collected data from 6 reliable sources including TechCrunch, Financial Times, and company press releases. Data includes founding information, funding rounds, and market positioning.`,
+      timestamp: new Date(Date.now() - 15000)
+    }
+  ];
+  
+  const extractionNodeSteps = [
+    {
+      id: 3,
+      name: 'structured_extraction',
+      description: `[Extraction Node] Extracting structured information about ${companyName} from collected data.`,
+      completed: true,
+      result: `Successfully extracted key attributes: founding year (2022), headquarters location (London), focus area (Alternative Lending), investor information, and funding details (£12M).`,
+      timestamp: new Date(Date.now() - 12000)
+    },
+    {
+      id: 4,
+      name: 'data_validation',
+      description: `[Extraction Node] Validating extracted data about ${companyName} for accuracy and completeness.`,
+      completed: true,
+      result: `Validated all extracted data points against multiple sources. Identified and resolved 2 discrepancies in funding amount reporting. Data validation complete with high confidence.`,
+      timestamp: new Date(Date.now() - 9000)
+    }
+  ];
+  
+  const analysisNodeSteps = [
+    {
+      id: 5,
+      name: 'market_analysis',
+      description: `[Analysis Node] Analyzing ${companyName}'s market position and competitive landscape.`,
+      completed: true,
+      result: `Completed market analysis. ${companyName} operates in the growing alternative lending sector with 3 main competitors. Company differentiates through proprietary data analytics for risk assessment.`,
+      timestamp: new Date(Date.now() - 6000)
+    },
+    {
+      id: 6,
+      name: 'strategic_relevance',
+      description: `[Analysis Node] Evaluating strategic relevance of ${companyName} to banking operations.`,
+      completed: true,
+      result: `Strategic relevance assessment complete. ${companyName}'s alternative data approach to lending decisions has high relevance (38/40) to traditional banking operations seeking to modernize risk assessment.`,
+      timestamp: new Date(Date.now() - 3000)
+    },
+    {
+      id: 7,
+      name: 'final_scoring',
+      description: `[Analysis Node] Calculating final weighted score for ${companyName}.`,
+      completed: true,
+      result: `Final score calculation: Funding Stage (26/30), Market Buzz (28/30), Strategic Relevance (38/40). Total score: 92/100.`,
+      timestamp: new Date()
+    }
+  ];
+  
+  return [...researchNodeSteps, ...extractionNodeSteps, ...analysisNodeSteps];
+};
+
+/**
  * Simulate LangGraph execution
  * @param {Object} graph - Graph configuration
  * @param {Object} parameters - Discovery parameters
  * @returns {Promise<Array>} Discovered companies
  */
 const simulateLangGraphExecution = async (graph, parameters) => {
+  const companyName = parameters.companyName || 'DataLend';
+  
+  const steps = generateAgentSteps(companyName);
+  
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
   const mockCompanies = [
     {
-      name: 'DataLend',
+      name: companyName,
       foundingYear: 2022,
       location: 'London, UK',
       focusArea: 'Alternative Lending',
       investors: ['Index Ventures', 'Accel'],
       fundingAmount: '£12M',
       newsHeadlines: [
-        'DataLend uses alternative data to revolutionize lending decisions',
-        'DataLend expands to European markets with £12M Series A'
+        `${companyName} uses alternative data to revolutionize lending decisions`,
+        `${companyName} expands to European markets with £12M Series A`
       ],
-      websiteUrl: 'https://datalend.finance'
-    },
-    {
+      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.finance`,
+      agentSteps: steps
+    }
+  ];
+  
+  if (companyName !== 'DataLend') {
+    mockCompanies.push({
       name: 'RegTechAI',
       foundingYear: 2021,
       location: 'Singapore',
@@ -142,37 +225,10 @@ const simulateLangGraphExecution = async (graph, parameters) => {
         'RegTechAI raises $20M to automate compliance for financial institutions',
         'RegTechAI\'s platform reduces compliance costs by 60% in pilot studies'
       ],
-      websiteUrl: 'https://regtechai.com'
-    },
-    {
-      name: 'PensionPlus',
-      foundingYear: 2020,
-      location: 'Berlin, Germany',
-      focusArea: 'Retirement Planning',
-      investors: ['Earlybird', 'Project A Ventures'],
-      fundingAmount: '€9M',
-      newsHeadlines: [
-        'PensionPlus secures €9M to modernize retirement planning',
-        'PensionPlus launches mobile app for millennial retirement savings'
-      ],
-      websiteUrl: 'https://pensionplus.eu'
-    },
-    {
-      name: 'TaxSmart',
-      foundingYear: 2023,
-      location: 'Sydney, Australia',
-      focusArea: 'Tax Optimization',
-      investors: ['Blackbird Ventures', 'Square Peg Capital'],
-      fundingAmount: 'A$5M',
-      newsHeadlines: [
-        'TaxSmart raises A$5M seed round to simplify tax filing for businesses',
-        'TaxSmart AI reduces tax preparation time by 75%'
-      ],
-      websiteUrl: 'https://taxsmart.io'
-    }
-  ];
-  
-  await new Promise(resolve => setTimeout(resolve, 1000));
+      websiteUrl: 'https://regtechai.com',
+      agentSteps: generateAgentSteps('RegTechAI')
+    });
+  }
   
   return mockCompanies;
 };
