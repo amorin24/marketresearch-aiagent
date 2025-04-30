@@ -238,7 +238,14 @@ const startCompanyResearch = async (companyName, frameworkNames) => {
         
         const discoveredCompanies = await framework.discoverCompanies({ companyName });
         
-        const agentSteps = discoveredCompanies[0]?.agentSteps || [];
+        let agentSteps = [];
+        if (!discoveredCompanies || !discoveredCompanies[0]) {
+          logger.warn(`No companies discovered for "${companyName}" using framework "${frameworkName}". Defaulting agentSteps to an empty array.`);
+        } else if (!discoveredCompanies[0].agentSteps) {
+          logger.warn(`No agentSteps found for the first discovered company for "${companyName}" using framework "${frameworkName}". Defaulting agentSteps to an empty array.`);
+        } else {
+          agentSteps = discoveredCompanies[0].agentSteps;
+        }
         
         jobData.frameworkStatuses[frameworkName].steps = agentSteps;
         discoveryJobs.set(jobId, jobData);
