@@ -110,9 +110,19 @@ const createGraph = (nodes) => {
 };
 
 /**
+ * @typedef {Object} AgentStep
+ * @property {number} id - Unique identifier for the step
+ * @property {string} name - Name of the step
+ * @property {string} description - Description of the step
+ * @property {boolean} completed - Whether the step is completed
+ * @property {string} result - Result of the step
+ * @property {Date} timestamp - Timestamp of the step
+ */
+
+/**
  * Generate agent reasoning steps for a company
  * @param {string} companyName - Name of the company
- * @returns {Array} Agent reasoning steps
+ * @returns {AgentStep[]} Agent reasoning steps
  */
 const generateAgentSteps = (companyName) => {
   const researchNodeSteps = [
