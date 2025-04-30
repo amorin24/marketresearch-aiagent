@@ -1,26 +1,60 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFramework } from '../../context/FrameworkContext';
+import { Framework } from '../../types';
 import PerformanceChart from '../../components/PerformanceChart';
 import FeatureComparison from '../../components/FeatureComparison';
 import EnhancedFrameworkSelector from '../../components/EnhancedFrameworkSelector';
 
 const FrameworkComparison = () => {
   const { frameworks } = useFramework();
-  const [selectedFrameworks, setSelectedFrameworks] = useState<string[]>([]);
+  const [selectedFrameworks, setSelectedFrameworks] = useState<string[]>(() => {
+    const saved = localStorage.getItem('selectedFrameworks');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [comparisonData, setComparisonData] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'performance' | 'capabilities' | 'limitations' | 'details'>('performance');
   const [chartType, setChartType] = useState<'bar' | 'radar'>('bar');
   const [selectedMetric, setSelectedMetric] = useState<'avgRunTime' | 'completionRate' | 'apiSuccessRate'>('completionRate');
+  const [formattedFrameworks, setFormattedFrameworks] = useState<Framework[]>([]);
+
+  useEffect(() => {
+    if (frameworks && frameworks.length > 0) {
+      const formatted = frameworks.map(fw => {
+        if (typeof fw === 'object' && fw.name) {
+          return fw as Framework;
+        }
+        return {
+          name: typeof fw === 'string' ? fw : String(fw),
+          description: typeof fw === 'string' ? `${fw} Framework` : 'Framework',
+          version: '1.0.0'
+        };
+      });
+      console.log('Formatted frameworks:', formatted);
+      setFormattedFrameworks(formatted);
+    }
+  }, [frameworks]);
+
+  useEffect(() => {
+    console.log('FrameworkComparison - Frameworks:', frameworks);
+    console.log('FrameworkComparison - Formatted Frameworks:', formattedFrameworks);
+  }, [frameworks, formattedFrameworks]);
+
+  useEffect(() => {
+    console.log('FrameworkComparison - Selected Frameworks:', selectedFrameworks);
+    localStorage.setItem('selectedFrameworks', JSON.stringify(selectedFrameworks));
+  }, [selectedFrameworks]);
 
   const handleFrameworkToggle = (frameworkName: string) => {
-    setSelectedFrameworks(prev => {
-      if (prev.includes(frameworkName)) {
-        return prev.filter(name => name !== frameworkName);
-      } else {
-        return [...prev, frameworkName];
-      }
-    });
+    console.log('FrameworkComparison - Toggle Framework:', frameworkName);
+    
+    const isSelected = selectedFrameworks.includes(frameworkName);
+    const newSelectedFrameworks = isSelected
+      ? selectedFrameworks.filter(name => name !== frameworkName)
+      : [...selectedFrameworks, frameworkName];
+    
+    console.log('FrameworkComparison - New Selected Frameworks:', newSelectedFrameworks);
+    setSelectedFrameworks(newSelectedFrameworks);
   };
 
   const handleCompare = async () => {
@@ -55,7 +89,7 @@ const FrameworkComparison = () => {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Framework Comparison</h1>
         
         <EnhancedFrameworkSelector 
-          frameworks={frameworks}
+          frameworks={formattedFrameworks}
           selectedFrameworks={selectedFrameworks}
           onToggleFramework={handleFrameworkToggle}
         />
