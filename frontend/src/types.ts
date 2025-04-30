@@ -1,16 +1,25 @@
+export interface CompanyScoreBreakdown {
+  fundingScore: number;
+  buzzScore: number;
+  relevanceScore: number;
+  totalScore: number;
+}
+
 export interface Company {
   id: string;
   name: string;
-  foundingYear: number;
-  location: string;
-  focusArea: string;
-  investors: string[];
-  fundingAmount: string;
-  newsHeadlines: string[];
-  websiteUrl: string;
+  foundingYear?: number;
+  location?: string;
+  focusArea?: string;
+  investors?: string[];
+  fundingAmount?: string;
+  newsHeadlines?: string[];
+  websiteUrl?: string;
   score: number;
-  discoveredBy: string;
-  discoveredAt: string;
+  discoveredBy?: string;
+  discoveredAt?: string;
+  scoreBreakdown?: CompanyScoreBreakdown;
+  summary?: string;
 }
 
 export interface Framework {
@@ -62,4 +71,32 @@ export interface DiscoveryJob {
   error: string | null;
   parameters: Record<string, any>;
   companiesCount?: number;
+}
+
+export interface ResearchStep {
+  id: number;
+  name: string;
+  description: string;
+  completed: boolean;
+  result: string | null;
+  timestamp: string | null;
+}
+
+export interface FrameworkStatus {
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  progress: number;
+  steps: ResearchStep[];
+  error: string | null;
+}
+
+export interface ResearchJob {
+  id: string;
+  companyName: string;
+  frameworks: string[];
+  status: 'running' | 'completed' | 'partial' | 'failed';
+  startTime: string;
+  endTime: string | null;
+  error: string | null;
+  frameworkResults: Record<string, Company>;
+  frameworkStatuses: Record<string, FrameworkStatus>;
 }

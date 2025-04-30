@@ -73,4 +73,33 @@ router.get('/export/:format', async (req, res) => {
   }
 });
 
+router.post('/research-company', async (req, res) => {
+  try {
+    const { companyName, frameworks } = req.body;
+    if (!companyName) {
+      return res.status(400).json({ error: 'Company name must be specified' });
+    }
+    
+    if (!frameworks || !Array.isArray(frameworks) || frameworks.length === 0) {
+      return res.status(400).json({ error: 'At least one framework must be specified' });
+    }
+    
+    const jobId = await companyService.startCompanyResearch(companyName, frameworks);
+    res.json({ jobId, status: 'research_started' });
+  } catch (error) {
+    logger.error(`Error starting company research: ${error.message}`);
+    res.status(500).json({ error: 'Failed to start company research' });
+  }
+});
+
+router.get('/research-company/:jobId', async (req, res) => {
+  try {
+    const status = await companyService.getCompanyResearchStatus(req.params.jobId);
+    res.json(status);
+  } catch (error) {
+    logger.error(`Error fetching company research status: ${error.message}`);
+    res.status(500).json({ error: 'Failed to fetch company research status' });
+  }
+});
+
 module.exports = router;

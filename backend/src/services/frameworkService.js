@@ -24,6 +24,12 @@ const initializeFrameworks = async () => {
           envKey = 'AUTOGEN_ENABLED';
         } else if (adapterName === 'langGraphAdapter') {
           envKey = 'LANGGRAPH_ENABLED';
+        } else if (adapterName === 'crewAIAdapter') {
+          envKey = 'CREWAI_ENABLED';
+        } else if (adapterName === 'squidAIAdapter') {
+          envKey = 'SQUIDAI_ENABLED';
+        } else if (adapterName === 'lettaAIAdapter') {
+          envKey = 'LETTAAI_ENABLED';
         } else {
           envKey = `${adapterName.toUpperCase()}_ENABLED`;
         }

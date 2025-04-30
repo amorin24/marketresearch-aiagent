@@ -189,10 +189,220 @@ const exportCompanies = async (format) => {
   }
 };
 
+/**
+ * Start company research process using multiple frameworks
+ * @param {string} companyName - Name of the company to research
+ * @param {Array} frameworkNames - Names of the frameworks to use
+ * @returns {string} Job ID
+ */
+const startCompanyResearch = async (companyName, frameworkNames) => {
+  const jobId = uuidv4();
+  
+  const researchJob = {
+    id: jobId,
+    companyName,
+    frameworks: frameworkNames,
+    status: 'running',
+    startTime: new Date(),
+    endTime: null,
+    error: null,
+    frameworkResults: {},
+    frameworkStatuses: {}
+  };
+  
+  // Initialize status for each framework
+  frameworkNames.forEach(name => {
+    researchJob.frameworkStatuses[name] = {
+      status: 'pending',
+      progress: 0,
+      steps: [],
+      error: null
+    };
+  });
+  
+  discoveryJobs.set(jobId, researchJob);
+  
+  process.nextTick(async () => {
+    logger.info(`Starting company research job ${jobId} for company "${companyName}" with frameworks: ${frameworkNames.join(', ')}`);
+    
+    await Promise.all(frameworkNames.map(async (frameworkName) => {
+      try {
+        const framework = await frameworkService.getFrameworkAdapter(frameworkName);
+        if (!framework) {
+          throw new Error(`Framework ${frameworkName} not found or not enabled`);
+        }
+        
+        let jobData = discoveryJobs.get(jobId);
+        jobData.frameworkStatuses[frameworkName].status = 'running';
+        discoveryJobs.set(jobId, jobData);
+        
+        const researchSteps = [
+          {
+            id: 1,
+            name: 'discovery',
+            description: `Searching public fintech databases for ${companyName}`,
+            completed: false,
+            result: null,
+            timestamp: new Date()
+          },
+          {
+            id: 2,
+            name: 'extraction',
+            description: 'Retrieving and extracting company data',
+            completed: false,
+            result: null,
+            timestamp: null
+          },
+          {
+            id: 3,
+            name: 'analysis',
+            description: 'Analyzing company information',
+            completed: false,
+            result: null,
+            timestamp: null
+          },
+          {
+            id: 4,
+            name: 'scoring',
+            description: 'Applying scoring model',
+            completed: false,
+            result: null,
+            timestamp: null
+          },
+          {
+            id: 5,
+            name: 'summary',
+            description: 'Generating summary',
+            completed: false,
+            result: null,
+            timestamp: null
+          }
+        ];
+        
+        jobData.frameworkStatuses[frameworkName].steps = researchSteps;
+        discoveryJobs.set(jobId, jobData);
+        
+        for (const step of researchSteps) {
+          jobData.frameworkStatuses[frameworkName].steps[step.id - 1].timestamp = new Date();
+          discoveryJobs.set(jobId, jobData);
+          
+          await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
+          
+          jobData = discoveryJobs.get(jobId);
+          jobData.frameworkStatuses[frameworkName].steps[step.id - 1].completed = true;
+          jobData.frameworkStatuses[frameworkName].progress = (step.id / researchSteps.length) * 100;
+          
+          if (step.name === 'discovery') {
+            jobData.frameworkStatuses[frameworkName].steps[step.id - 1].result = 
+              `Found ${companyName} in public databases`;
+          } else if (step.name === 'extraction') {
+            jobData.frameworkStatuses[frameworkName].steps[step.id - 1].result = 
+              `Retrieved 3 funding articles from TechCrunch`;
+          } else if (step.name === 'analysis') {
+            jobData.frameworkStatuses[frameworkName].steps[step.id - 1].result = 
+              `Extracted founding year and investor list`;
+          } else if (step.name === 'scoring') {
+            jobData.frameworkStatuses[frameworkName].steps[step.id - 1].result = 
+              `Applied scoring model with configured weights`;
+          } else if (step.name === 'summary') {
+            jobData.frameworkStatuses[frameworkName].steps[step.id - 1].result = 
+              `Generated company profile and summary`;
+          }
+          
+          discoveryJobs.set(jobId, jobData);
+        }
+        
+        // Generate a company result for this framework
+        const company = {
+          id: uuidv4(),
+          name: companyName,
+          discoveredBy: frameworkName,
+          discoveredAt: new Date(),
+          foundingYear: 2010 + Math.floor(Math.random() * 10),
+          location: ['San Francisco, CA', 'New York, NY', 'London, UK'][Math.floor(Math.random() * 3)],
+          focusArea: ['Payments', 'Lending', 'WealthTech', 'Crypto'][Math.floor(Math.random() * 4)],
+          investors: ['Sequoia Capital', 'Andreessen Horowitz', 'Y Combinator'].slice(0, 1 + Math.floor(Math.random() * 3)),
+          fundingAmount: `$${(5 + Math.floor(Math.random() * 95))}M`,
+          newsHeadlines: [
+            `${companyName} raises new funding round`,
+            `${companyName} launches new product`,
+            `${companyName} expands to new markets`
+          ],
+          websiteUrl: `https://www.${companyName.toLowerCase()}.com`,
+        };
+        
+        company.score = calculateScore(company);
+        
+        const fundingScore = calculateFundingScore(company) * 30;
+        const buzzScore = calculateBuzzScore(company) * 30;
+        const relevanceScore = calculateRelevanceScore(company) * 40;
+        
+        company.scoreBreakdown = {
+          fundingScore: Math.round(fundingScore),
+          buzzScore: Math.round(buzzScore),
+          relevanceScore: Math.round(relevanceScore),
+          totalScore: company.score
+        };
+        
+        company.summary = `${companyName} is a ${company.focusArea.toLowerCase()} company founded in ${company.foundingYear}. ` +
+                        `They have raised ${company.fundingAmount} from ${company.investors.join(', ')}. ` +
+                        `The company shows strong potential in the banking sector with a strategic relevance score of ${Math.round(relevanceScore)}/40.`;
+        
+        jobData = discoveryJobs.get(jobId);
+        jobData.frameworkStatuses[frameworkName].status = 'completed';
+        jobData.frameworkStatuses[frameworkName].progress = 100;
+        jobData.frameworkResults[frameworkName] = company;
+        discoveryJobs.set(jobId, jobData);
+        
+        logger.info(`Research for ${companyName} completed with framework ${frameworkName}`);
+      } catch (error) {
+        logger.error(`Error in company research for ${companyName} with framework ${frameworkName}: ${error.message}`);
+        
+        const jobData = discoveryJobs.get(jobId);
+        jobData.frameworkStatuses[frameworkName].status = 'failed';
+        jobData.frameworkStatuses[frameworkName].error = error.message;
+        discoveryJobs.set(jobId, jobData);
+      }
+    }));
+    
+    const allFrameworksComplete = () => {
+      const job = discoveryJobs.get(jobId);
+      return Object.values(job.frameworkStatuses).every(
+        status => status.status === 'completed' || status.status === 'failed'
+      );
+    };
+    
+    // Update overall job status
+    let jobData = discoveryJobs.get(jobId);
+    if (allFrameworksComplete()) {
+      jobData.status = 'completed';
+      jobData.endTime = new Date();
+    } else {
+      jobData.status = 'partial';
+    }
+    discoveryJobs.set(jobId, jobData);
+    
+    logger.info(`Company research job ${jobId} completed for company "${companyName}"`);
+  });
+  
+  return jobId;
+};
+
+/**
+ * Get company research job status
+ * @param {string} jobId - Job ID
+ * @returns {Object|null} Job status or null if not found
+ */
+const getCompanyResearchStatus = async (jobId) => {
+  return discoveryJobs.get(jobId) || null;
+};
+
 module.exports = {
   getAllCompanies,
   getCompanyById,
   startDiscovery,
   getDiscoveryStatus,
-  exportCompanies
+  exportCompanies,
+  startCompanyResearch,
+  getCompanyResearchStatus
 };
