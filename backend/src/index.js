@@ -38,6 +38,10 @@ app.use('/api/companies', companyRoutes);
 app.use('/api/frameworks', frameworkRoutes);
 app.use('/api/config', configRoutes);
 
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
 app.use((err, req, res, next) => {
   logger.error(`${err.message}\n${err.stack}`);
   res.status(500).json({ error: 'Internal Server Error', message: err.message });
