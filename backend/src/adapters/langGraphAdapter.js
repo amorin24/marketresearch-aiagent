@@ -110,28 +110,119 @@ const createGraph = (nodes) => {
 };
 
 /**
+ * Generate agent reasoning steps for a company
+ * @param {string} companyName - Name of the company
+ * @returns {Array} Agent reasoning steps
+ */
+const generateAgentSteps = (companyName) => {
+  const researchNodeSteps = [
+    {
+      id: 1,
+      name: 'query_formulation',
+      description: `[Research Node] Formulating search queries for ${companyName} across financial databases and news sources.`,
+      completed: true,
+      result: `Generated optimized search queries: "${companyName} fintech funding", "${companyName} investors", "${companyName} financial technology", "${companyName} recent news".`,
+      timestamp: new Date(Date.now() - 20000)
+    },
+    {
+      id: 2,
+      name: 'source_retrieval',
+      description: `[Research Node] Retrieving information about ${companyName} from multiple sources.`,
+      completed: true,
+      result: `Retrieved 7 relevant documents: 2 TechCrunch articles, 1 Yahoo Finance report, 3 LinkedIn updates, and 1 company press release. All sources are publicly available and contain information about ${companyName}.`,
+      timestamp: new Date(Date.now() - 17000)
+    },
+    {
+      id: 3,
+      name: 'source_ranking',
+      description: `[Research Node] Ranking sources about ${companyName} by relevance and recency.`,
+      completed: true,
+      result: `Ranked sources by relevance and recency. Most valuable sources: recent press release (highest relevance), TechCrunch funding announcement (high relevance, recent), LinkedIn company updates (medium relevance, very recent).`,
+      timestamp: new Date(Date.now() - 14000)
+    }
+  ];
+  
+  const extractionNodeSteps = [
+    {
+      id: 4,
+      name: 'document_parsing',
+      description: `[Extraction Node] Parsing retrieved documents about ${companyName} to extract structured information.`,
+      completed: true,
+      result: `Parsed all 7 documents using document_parser tool. Extracted raw text and metadata from HTML, PDF, and social media content. Prepared for entity extraction.`,
+      timestamp: new Date(Date.now() - 11000)
+    },
+    {
+      id: 5,
+      name: 'entity_extraction',
+      description: `[Extraction Node] Extracting key entities and relationships from ${companyName} documents.`,
+      completed: true,
+      result: `Extracted key entities: company name, founding date (${2020 + Math.floor(Math.random() * 4)}), headquarters location (${['London, UK', 'Singapore', 'Berlin, Germany', 'Sydney, Australia'][Math.floor(Math.random() * 4)]}), focus area (${['Alternative Lending', 'Regulatory Technology', 'Retirement Planning', 'Tax Optimization'][Math.floor(Math.random() * 4)]}), investor names, and funding details.`,
+      timestamp: new Date(Date.now() - 8000)
+    },
+    {
+      id: 6,
+      name: 'data_validation',
+      description: `[Extraction Node] Cross-validating extracted information about ${companyName} across sources.`,
+      completed: true,
+      result: `Cross-validated key data points across multiple sources. Resolved 2 conflicts in funding amount by prioritizing the most recent source. Confirmed investor information from both company press release and TechCrunch article.`,
+      timestamp: new Date(Date.now() - 5000)
+    }
+  ];
+  
+  const analysisNodeSteps = [
+    {
+      id: 7,
+      name: 'scoring_calculation',
+      description: `[Analysis Node] Calculating scores for ${companyName} based on weighted criteria.`,
+      completed: true,
+      result: `Applied weighted scoring model: Funding Stage (30%) = ${Math.floor(Math.random() * 10) + 20}/30, Market Buzz (30%) = ${Math.floor(Math.random() * 10) + 20}/30, Strategic Relevance (40%) = ${Math.floor(Math.random() * 10) + 30}/40. Total score: ${Math.floor(Math.random() * 15) + 75}/100.`,
+      timestamp: new Date(Date.now() - 3000)
+    },
+    {
+      id: 8,
+      name: 'summary_generation',
+      description: `[Analysis Node] Generating comprehensive summary and analysis of ${companyName}.`,
+      completed: true,
+      result: `Generated detailed summary: "${companyName} is a promising ${['alternative lending', 'regulatory technology', 'retirement planning', 'tax optimization'][Math.floor(Math.random() * 4)]} company founded in ${2020 + Math.floor(Math.random() * 4)}. Based in ${['London', 'Singapore', 'Berlin', 'Sydney'][Math.floor(Math.random() * 4)]}, they have secured significant funding from notable investors and show strong potential in the fintech space with particular relevance to banking operations."`,
+      timestamp: new Date()
+    }
+  ];
+  
+  return [...researchNodeSteps, ...extractionNodeSteps, ...analysisNodeSteps];
+};
+
+/**
  * Simulate LangGraph execution
  * @param {Object} graph - Graph configuration
  * @param {Object} parameters - Discovery parameters
  * @returns {Promise<Array>} Discovered companies
  */
 const simulateLangGraphExecution = async (graph, parameters) => {
+  const companyName = parameters.companyName || 'DataLend';
+  
+  const steps = generateAgentSteps(companyName);
+  
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
   const mockCompanies = [
     {
-      name: 'DataLend',
+      name: companyName,
       foundingYear: 2022,
       location: 'London, UK',
       focusArea: 'Alternative Lending',
       investors: ['Index Ventures', 'Accel'],
       fundingAmount: '£12M',
       newsHeadlines: [
-        'DataLend uses alternative data to revolutionize lending decisions',
-        'DataLend expands to European markets with £12M Series A'
+        `${companyName} uses alternative data to revolutionize lending decisions`,
+        `${companyName} expands to European markets with £12M Series A`
       ],
-      websiteUrl: 'https://datalend.finance'
-    },
-    {
+      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.finance`,
+      agentSteps: steps
+    }
+  ];
+  
+  if (companyName !== 'DataLend') {
+    mockCompanies.push({
       name: 'RegTechAI',
       foundingYear: 2021,
       location: 'Singapore',
@@ -142,37 +233,10 @@ const simulateLangGraphExecution = async (graph, parameters) => {
         'RegTechAI raises $20M to automate compliance for financial institutions',
         'RegTechAI\'s platform reduces compliance costs by 60% in pilot studies'
       ],
-      websiteUrl: 'https://regtechai.com'
-    },
-    {
-      name: 'PensionPlus',
-      foundingYear: 2020,
-      location: 'Berlin, Germany',
-      focusArea: 'Retirement Planning',
-      investors: ['Earlybird', 'Project A Ventures'],
-      fundingAmount: '€9M',
-      newsHeadlines: [
-        'PensionPlus secures €9M to modernize retirement planning',
-        'PensionPlus launches mobile app for millennial retirement savings'
-      ],
-      websiteUrl: 'https://pensionplus.eu'
-    },
-    {
-      name: 'TaxSmart',
-      foundingYear: 2023,
-      location: 'Sydney, Australia',
-      focusArea: 'Tax Optimization',
-      investors: ['Blackbird Ventures', 'Square Peg Capital'],
-      fundingAmount: 'A$5M',
-      newsHeadlines: [
-        'TaxSmart raises A$5M seed round to simplify tax filing for businesses',
-        'TaxSmart AI reduces tax preparation time by 75%'
-      ],
-      websiteUrl: 'https://taxsmart.io'
-    }
-  ];
-  
-  await new Promise(resolve => setTimeout(resolve, 1000));
+      websiteUrl: 'https://regtechai.com',
+      agentSteps: generateAgentSteps('RegTechAI')
+    });
+  }
   
   return mockCompanies;
 };
