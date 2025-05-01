@@ -6,8 +6,7 @@
  * and LangChain documentation: https://python.langchain.com/docs/get_started
  */
 
-const axios = require('axios');
-const { logger } = require('../index');
+const { createBaseAdapter } = require('./baseAdapter');
 
 const config = {
   description: 'LangGraph/LangChain Framework Adapter',
@@ -27,28 +26,15 @@ const config = {
 };
 
 /**
- * Discover companies using LangGraph/LangChain
- * @param {Object} parameters - Discovery parameters
- * @returns {Promise<Array>} Discovered companies
+ * Create all agents for LangGraph/LangChain
+ * @returns {Object} Object containing all agents
  */
-const discoverCompanies = async (parameters = {}) => {
-  try {
-    logger.info('Starting company discovery with LangGraph/LangChain');
-    
-    const researchNode = createResearchNode();
-    const extractionNode = createExtractionNode();
-    const analysisNode = createAnalysisNode();
-    
-    const graph = createGraph([researchNode, extractionNode, analysisNode]);
-    
-    const companies = await simulateLangGraphExecution(graph, parameters);
-    
-    logger.info(`LangGraph/LangChain discovered ${companies.length} companies`);
-    return companies;
-  } catch (error) {
-    logger.error(`Error in LangGraph/LangChain discovery: ${error.message}`);
-    throw error;
-  }
+const createAgents = () => {
+  return {
+    researchNode: createResearchNode(),
+    extractionNode: createExtractionNode(),
+    analysisNode: createAnalysisNode()
+  };
 };
 
 /**
@@ -94,6 +80,15 @@ const createAnalysisNode = () => {
 };
 
 /**
+ * Create a workflow with agents
+ * @param {Object} agents - Object containing all agents
+ * @returns {Object} Graph
+ */
+const createWorkflow = (agents) => {
+  return createGraph([agents.researchNode, agents.extractionNode, agents.analysisNode]);
+};
+
+/**
  * Create a graph with nodes
  * @param {Array} nodes - List of nodes
  * @returns {Object} Graph
@@ -114,7 +109,7 @@ const createGraph = (nodes) => {
  * @param {string} companyName - Name of the company
  * @returns {Array} Agent reasoning steps
  */
-const generateAgentSteps = (companyName) => {
+const generateFrameworkSpecificSteps = (companyName) => {
   const researchNodeSteps = [
     {
       id: 1,
@@ -191,77 +186,17 @@ const generateAgentSteps = (companyName) => {
   return [...researchNodeSteps, ...extractionNodeSteps, ...analysisNodeSteps];
 };
 
-/**
- * Simulate LangGraph execution
- * @param {Object} graph - Graph configuration
- * @param {Object} parameters - Discovery parameters
- * @returns {Promise<Array>} Discovered companies
- */
-const simulateLangGraphExecution = async (graph, parameters) => {
-  const companyName = parameters.companyName || 'DataLend';
-  
-  const steps = generateAgentSteps(companyName);
-  
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  const mockCompanies = [
-    {
-      name: companyName,
-      foundingYear: 2022,
-      location: 'London, UK',
-      focusArea: 'Technology',
-      investors: ['Index Ventures', 'Accel'],
-      fundingAmount: '£12M',
-      newsHeadlines: [
-        `${companyName} uses innovative technology to revolutionize data analytics`,
-        `${companyName} expands to European markets with £12M Series A`
-      ],
-      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.tech`,
-      isPublic: Math.random() > 0.5, // Randomly determine if company is public
-      stockSymbol: companyName.substring(0, 4).toUpperCase(),
-      stockPrice: Math.random() > 0.5 ? {
-        symbol: companyName.substring(0, 4).toUpperCase(),
-        currentPrice: 92.35 + (Math.random() * 30 - 15),
-        change: Math.random() * 6 - 3,
-        changePercent: Math.random() * 4 - 2,
-        marketCap: '£3.5B',
-        lastUpdated: new Date().toISOString()
-      } : null,
-      agentSteps: steps
-    }
-  ];
-  
-  if (companyName !== 'DataLend') {
-    mockCompanies.push({
-      name: 'CloudSecure',
-      foundingYear: 2021,
-      location: 'Singapore',
-      focusArea: 'Cybersecurity',
-      investors: ['Temasek', 'GIC'],
-      fundingAmount: '$20M',
-      newsHeadlines: [
-        'CloudSecure raises $20M to enhance cloud security solutions',
-        'CloudSecure\'s platform reduces security incidents by 60% in pilot studies'
-      ],
-      websiteUrl: 'https://cloudsecure.tech',
-      isPublic: true,
-      stockSymbol: 'CSEC',
-      stockPrice: {
-        symbol: 'CSEC',
-        currentPrice: 45.75,
-        change: 1.25,
-        changePercent: 2.81,
-        marketCap: '$1.2B',
-        lastUpdated: new Date().toISOString()
-      },
-      agentSteps: generateAgentSteps('CloudSecure')
-    });
-  }
-  
-  return mockCompanies;
-};
+const getDefaultCompanyName = () => 'DataLend';
+const getSecondCompanyName = () => 'CloudSecure';
 
-module.exports = {
-  ...config,
-  discoverCompanies
-};
+const adapter = createBaseAdapter(
+  config,
+  createAgents,
+  createWorkflow,
+  generateFrameworkSpecificSteps
+);
+
+adapter._internal.getDefaultCompanyName = getDefaultCompanyName;
+adapter._internal.getSecondCompanyName = getSecondCompanyName;
+
+module.exports = adapter;

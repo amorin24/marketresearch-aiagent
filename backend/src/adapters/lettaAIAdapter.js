@@ -5,8 +5,7 @@
  * Based on LettaAI documentation (hypothetical framework)
  */
 
-const axios = require('axios');
-const { logger } = require('../index');
+const { createBaseAdapter } = require('./baseAdapter');
 
 const config = {
   description: 'LettaAI Framework Adapter',
@@ -24,27 +23,13 @@ const config = {
 };
 
 /**
- * Discover companies using LettaAI
- * @param {Object} parameters - Discovery parameters
- * @returns {Promise<Array>} Discovered companies
+ * Create all agents for LettaAI
+ * @returns {Object} Object containing all agents
  */
-const discoverCompanies = async (parameters = {}) => {
-  try {
-    logger.info('Starting company discovery with LettaAI');
-    
-    
-    const agentHierarchy = createAgentHierarchy();
-    
-    const goals = defineDiscoveryGoals(parameters);
-    
-    const companies = await simulateLettaAIExecution(agentHierarchy, goals);
-    
-    logger.info(`LettaAI discovered ${companies.length} companies`);
-    return companies;
-  } catch (error) {
-    logger.error(`Error in LettaAI discovery: ${error.message}`);
-    throw error;
-  }
+const createAgents = () => {
+  return {
+    agentHierarchy: createAgentHierarchy()
+  };
 };
 
 /**
@@ -88,6 +73,18 @@ const createAgentHierarchy = () => {
       role: 'Score entities based on relevance',
       subordinates: []
     }
+  };
+};
+
+/**
+ * Create a workflow with agents and goals
+ * @param {Object} agents - Object containing all agents
+ * @returns {Object} Workflow
+ */
+const createWorkflow = (agents) => {
+  return {
+    agentHierarchy: agents.agentHierarchy,
+    goals: defineDiscoveryGoals({})
   };
 };
 
@@ -138,7 +135,7 @@ const defineDiscoveryGoals = (parameters) => {
  * @param {string} companyName - Name of the company
  * @returns {Array} Agent reasoning steps
  */
-const generateAgentSteps = (companyName) => {
+const generateFrameworkSpecificSteps = (companyName) => {
   const coordinatorSteps = [
     {
       id: 1,
@@ -231,7 +228,7 @@ const generateAgentSteps = (companyName) => {
       timestamp: new Date(Date.now() - 2000)
     },
     {
-      id: 9,
+      id: 10,
       name: 'final_assessment',
       description: `Relevance Scorer: Generating final assessment for ${companyName}.`,
       completed: true,
@@ -251,77 +248,17 @@ const generateAgentSteps = (companyName) => {
   ];
 };
 
-/**
- * Simulate LettaAI execution
- * @param {Object} agentHierarchy - Agent hierarchy
- * @param {Array} goals - List of goals
- * @returns {Promise<Array>} Discovered companies
- */
-const simulateLettaAIExecution = async (agentHierarchy, goals) => {
-  const companyName = goals[0]?.criteria?.companyName || 'BlockSecure';
-  
-  const steps = generateAgentSteps(companyName);
-  
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  const mockCompanies = [
-    {
-      name: companyName,
-      foundingYear: 2020,
-      location: 'Zurich, Switzerland',
-      focusArea: 'Technology',
-      investors: ['Polychain Capital', 'Paradigm'],
-      fundingAmount: '$22M',
-      newsHeadlines: [
-        `${companyName} develops new security protocol for enterprise applications`,
-        `${companyName} partners with major technology providers to enhance security`
-      ],
-      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.io`,
-      isPublic: Math.random() > 0.5, // Randomly determine if company is public
-      stockSymbol: companyName.substring(0, 4).toUpperCase(),
-      stockPrice: Math.random() > 0.5 ? {
-        symbol: companyName.substring(0, 4).toUpperCase(),
-        currentPrice: 78.45 + (Math.random() * 25 - 12.5),
-        change: Math.random() * 4 - 2,
-        changePercent: Math.random() * 5 - 2.5,
-        marketCap: '$2.4B',
-        lastUpdated: new Date().toISOString()
-      } : null,
-      agentSteps: steps
-    }
-  ];
-  
-  if (companyName !== 'BlockSecure') {
-    mockCompanies.push({
-      name: 'TechStream',
-      foundingYear: 2019,
-      location: 'Singapore',
-      focusArea: 'Technology',
-      investors: ['Temasek', 'GIC'],
-      fundingAmount: '$30M',
-      newsHeadlines: [
-        'TechStream launches real-time data processing solution',
-        'TechStream reduces operational costs by 80% for businesses'
-      ],
-      websiteUrl: 'https://techstream.com',
-      isPublic: true,
-      stockSymbol: 'TSTR',
-      stockPrice: {
-        symbol: 'TSTR',
-        currentPrice: 63.20,
-        change: 2.15,
-        changePercent: 3.52,
-        marketCap: '$1.9B',
-        lastUpdated: new Date().toISOString()
-      },
-      agentSteps: generateAgentSteps('TechStream')
-    });
-  }
-  
-  return mockCompanies;
-};
+const getDefaultCompanyName = () => 'BlockSecure';
+const getSecondCompanyName = () => 'TechStream';
 
-module.exports = {
-  ...config,
-  discoverCompanies
-};
+const adapter = createBaseAdapter(
+  config,
+  createAgents,
+  createWorkflow,
+  generateFrameworkSpecificSteps
+);
+
+adapter._internal.getDefaultCompanyName = getDefaultCompanyName;
+adapter._internal.getSecondCompanyName = getSecondCompanyName;
+
+module.exports = adapter;

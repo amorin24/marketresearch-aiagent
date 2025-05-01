@@ -5,8 +5,7 @@
  * Based on SquidAI documentation (hypothetical framework)
  */
 
-const axios = require('axios');
-const { logger } = require('../index');
+const { createBaseAdapter } = require('./baseAdapter');
 
 const config = {
   description: 'SquidAI Framework Adapter',
@@ -24,27 +23,14 @@ const config = {
 };
 
 /**
- * Discover companies using SquidAI
- * @param {Object} parameters - Discovery parameters
- * @returns {Promise<Array>} Discovered companies
+ * Create all agents for SquidAI
+ * @returns {Object} Object containing all agents
  */
-const discoverCompanies = async (parameters = {}) => {
-  try {
-    logger.info('Starting company discovery with SquidAI');
-    
-    
-    const squid = initializeSquidAI();
-    
-    const tasks = defineDiscoveryTasks();
-    
-    const companies = await simulateSquidAIExecution(squid, tasks, parameters);
-    
-    logger.info(`SquidAI discovered ${companies.length} companies`);
-    return companies;
-  } catch (error) {
-    logger.error(`Error in SquidAI discovery: ${error.message}`);
-    throw error;
-  }
+const createAgents = () => {
+  return {
+    squid: initializeSquidAI(),
+    tasks: defineDiscoveryTasks()
+  };
 };
 
 /**
@@ -106,11 +92,23 @@ const defineDiscoveryTasks = () => {
 };
 
 /**
+ * Create a workflow with agents and tasks
+ * @param {Object} agents - Object containing all agents
+ * @returns {Object} Workflow
+ */
+const createWorkflow = (agents) => {
+  return {
+    environment: agents.squid,
+    tasks: agents.tasks
+  };
+};
+
+/**
  * Generate agent reasoning steps for a company
  * @param {string} companyName - Name of the company
  * @returns {Array} Agent reasoning steps
  */
-const generateAgentSteps = (companyName) => {
+const generateFrameworkSpecificSteps = (companyName) => {
   const searcherSteps = [
     {
       id: 1,
@@ -179,78 +177,17 @@ const generateAgentSteps = (companyName) => {
   return [...searcherSteps, ...extractorSteps, ...analyzerSteps];
 };
 
-/**
- * Simulate SquidAI execution
- * @param {Object} squid - SquidAI environment
- * @param {Array} tasks - List of tasks
- * @param {Object} parameters - Discovery parameters
- * @returns {Promise<Array>} Discovered companies
- */
-const simulateSquidAIExecution = async (squid, tasks, parameters) => {
-  const companyName = parameters.companyName || 'LoanQuick';
-  
-  const steps = generateAgentSteps(companyName);
-  
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  const mockCompanies = [
-    {
-      name: companyName,
-      foundingYear: 2019,
-      location: 'Chicago, IL',
-      focusArea: 'Technology',
-      investors: ['Y Combinator', 'Lightspeed Venture Partners'],
-      fundingAmount: '$15M',
-      newsHeadlines: [
-        `${companyName} introduces innovative data processing technology`,
-        `${companyName} partners with major enterprises for technology integration`
-      ],
-      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.io`,
-      isPublic: Math.random() > 0.5, // Randomly determine if company is public
-      stockSymbol: companyName.substring(0, 4).toUpperCase(),
-      stockPrice: Math.random() > 0.5 ? {
-        symbol: companyName.substring(0, 4).toUpperCase(),
-        currentPrice: 68.75 + (Math.random() * 20 - 10),
-        change: Math.random() * 5 - 2.5,
-        changePercent: Math.random() * 3 - 1.5,
-        marketCap: '$1.8B',
-        lastUpdated: new Date().toISOString()
-      } : null,
-      agentSteps: steps
-    }
-  ];
-  
-  if (companyName !== 'LoanQuick') {
-    mockCompanies.push({
-      name: 'TechVision',
-      foundingYear: 2020,
-      location: 'Austin, TX',
-      focusArea: 'Artificial Intelligence',
-      investors: ['Founders Fund', 'General Catalyst'],
-      fundingAmount: '$18M',
-      newsHeadlines: [
-        'TechVision launches AI-powered analytics platform',
-        'TechVision expands enterprise solutions for remote workforce'
-      ],
-      websiteUrl: 'https://techvision.ai',
-      isPublic: true,
-      stockSymbol: 'TCVN',
-      stockPrice: {
-        symbol: 'TCVN',
-        currentPrice: 42.30,
-        change: 1.75,
-        changePercent: 4.31,
-        marketCap: '$950M',
-        lastUpdated: new Date().toISOString()
-      },
-      agentSteps: generateAgentSteps('TechVision')
-    });
-  }
-  
-  return mockCompanies;
-};
+const getDefaultCompanyName = () => 'LoanQuick';
+const getSecondCompanyName = () => 'TechVision';
 
-module.exports = {
-  ...config,
-  discoverCompanies
-};
+const adapter = createBaseAdapter(
+  config,
+  createAgents,
+  createWorkflow,
+  generateFrameworkSpecificSteps
+);
+
+adapter._internal.getDefaultCompanyName = getDefaultCompanyName;
+adapter._internal.getSecondCompanyName = getSecondCompanyName;
+
+module.exports = adapter;
