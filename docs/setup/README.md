@@ -121,6 +121,92 @@ If either server fails to start due to port conflicts:
 - Change the port in the `.env` file for the backend
 - For the frontend, you can use the `--port` flag: `npm run dev -- --port 3000`
 
+## Docker Setup
+
+The Market Research AI Agent Testing Platform can be run using Docker, which simplifies the setup process and ensures consistent environments across different systems.
+
+### Prerequisites for Docker Setup
+
+- **Docker** (version 20.10 or higher)
+- **Docker Compose** (version 2.0 or higher)
+
+### Running with Docker Compose
+
+1. Clone the repository (if you haven't already):
+
+```bash
+git clone https://github.com/amorin24/marketresearch-aiagent.git
+cd marketresearch-aiagent
+```
+
+2. Create a `.env` file in the backend directory:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+3. Edit the `.env` file to add your OpenAI API key and other configuration options.
+
+4. Build and start the containers:
+
+```bash
+docker-compose up -d
+```
+
+This will start both the frontend and backend services. The frontend will be available at http://localhost and the backend API at http://localhost:8000.
+
+### Building Individual Containers
+
+If you prefer to build and run the containers individually:
+
+#### Backend Container
+
+```bash
+cd backend
+docker build -t marketresearch-backend .
+docker run -p 8000:8000 --env-file .env -d marketresearch-backend
+```
+
+#### Frontend Container
+
+```bash
+cd frontend
+docker build -t marketresearch-frontend .
+docker run -p 80:80 -d marketresearch-frontend
+```
+
+### Docker Configuration Details
+
+The project includes the following Docker configuration files:
+
+- `backend/Dockerfile`: Configures the Node.js backend environment
+- `frontend/Dockerfile`: Uses a multi-stage build process to build the React app and serve it with Nginx
+- `docker-compose.yml`: Orchestrates both services and sets up networking between them
+
+### Environment Variables in Docker
+
+When running with Docker, environment variables can be set in the following ways:
+
+1. In the `.env` file for the backend service
+2. Directly in the `docker-compose.yml` file
+3. Using the `-e` flag with `docker run` for individual containers
+
+### Troubleshooting Docker Setup
+
+#### Container Not Starting
+
+If a container fails to start:
+- Check the container logs: `docker logs <container_id>`
+- Verify that ports are not already in use on your host machine
+- Ensure Docker has sufficient resources allocated
+
+#### API Connection Issues
+
+If the frontend cannot connect to the backend:
+- Verify that both containers are running: `docker ps`
+- Check that the backend container is exposing port 8000
+- Ensure the frontend is configured to connect to the correct backend URL
+
 ## Next Steps
 
 Once you have successfully set up the platform, proceed to the [Usage Guide](../usage/README.md) to learn how to use the platform effectively.

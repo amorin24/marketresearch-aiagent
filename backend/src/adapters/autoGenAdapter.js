@@ -110,28 +110,111 @@ const createConversation = (agents) => {
 };
 
 /**
+ * Generate agent reasoning steps for a company
+ * @param {string} companyName - Name of the company
+ * @returns {Array} Agent reasoning steps
+ */
+const generateAgentSteps = (companyName) => {
+  const userProxySteps = [
+    {
+      id: 1,
+      name: 'task_definition',
+      description: `UserProxy: I need comprehensive information about ${companyName} for market research purposes.`,
+      completed: true,
+      result: `Task defined: Research ${companyName} and extract key company attributes for market analysis.`,
+      timestamp: new Date(Date.now() - 18000)
+    },
+    {
+      id: 2,
+      name: 'tool_selection',
+      description: `UserProxy: Selecting appropriate tools for researching ${companyName}.`,
+      completed: true,
+      result: `Selected web_search and file_system tools for data gathering and storage.`,
+      timestamp: new Date(Date.now() - 15000)
+    }
+  ];
+  
+  const researchAssistantSteps = [
+    {
+      id: 3,
+      name: 'information_gathering',
+      description: `ResearchAssistant: Searching for ${companyName} across financial databases, news sources, and public records.`,
+      completed: true,
+      result: `Found ${companyName} mentioned in 5 recent TechCrunch articles, LinkedIn company profile, and AngelList. Company appears to be active in the fintech sector with recent funding activity.`,
+      timestamp: new Date(Date.now() - 12000)
+    },
+    {
+      id: 4,
+      name: 'source_verification',
+      description: `ResearchAssistant: Verifying the credibility and recency of sources for ${companyName}.`,
+      completed: true,
+      result: `Verified 4 high-quality sources: TechCrunch (3 articles from last 4 months), LinkedIn company page (updated weekly), AngelList profile (verified), and company website.`,
+      timestamp: new Date(Date.now() - 9000)
+    }
+  ];
+  
+  const dataAnalystSteps = [
+    {
+      id: 5,
+      name: 'data_extraction',
+      description: `DataAnalyst: Extracting structured data about ${companyName} from verified sources.`,
+      completed: true,
+      result: `Extracted founding year (2022), headquarters (Austin, TX), focus area (Blockchain Payments), investor information, and funding details ($18M).`,
+      timestamp: new Date(Date.now() - 6000)
+    },
+    {
+      id: 6,
+      name: 'data_analysis',
+      description: `DataAnalyst: Analyzing ${companyName}'s market position and strategic relevance.`,
+      completed: true,
+      result: `Analysis complete: ${companyName} is positioned in the high-growth blockchain payments sector with strong investor backing and significant market potential. Strategic relevance to banking operations is high due to innovative settlement technology.`,
+      timestamp: new Date(Date.now() - 3000)
+    },
+    {
+      id: 7,
+      name: 'scoring_calculation',
+      description: `DataAnalyst: Calculating weighted score for ${companyName} based on funding, market buzz, and strategic relevance.`,
+      completed: true,
+      result: `Score calculation complete: Funding Stage (25/30), Market Buzz (27/30), Strategic Relevance (35/40). Total score: 87/100.`,
+      timestamp: new Date()
+    }
+  ];
+  
+  return [...userProxySteps, ...researchAssistantSteps, ...dataAnalystSteps];
+};
+
+/**
  * Simulate AutoGen execution
  * @param {Object} conversation - Conversation configuration
  * @param {Object} parameters - Discovery parameters
  * @returns {Promise<Array>} Discovered companies
  */
 const simulateAutoGenExecution = async (conversation, parameters) => {
+  const companyName = parameters.companyName || 'BlockPay';
+  
+  const steps = generateAgentSteps(companyName);
+  
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
   const mockCompanies = [
     {
-      name: 'BlockPay',
+      name: companyName,
       foundingYear: 2022,
       location: 'Austin, TX',
       focusArea: 'Blockchain Payments',
       investors: ['Blockchain Capital', 'Pantera Capital'],
       fundingAmount: '$18M',
       newsHeadlines: [
-        'BlockPay secures $18M to bridge traditional finance with blockchain',
-        'BlockPay launches merchant integration platform'
+        `${companyName} secures $18M to bridge traditional finance with blockchain`,
+        `${companyName} launches merchant integration platform`
       ],
-      websiteUrl: 'https://blockpay.tech'
-    },
-    {
+      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.tech`,
+      agentSteps: steps
+    }
+  ];
+  
+  if (companyName !== 'BlockPay') {
+    mockCompanies.push({
       name: 'InsureTech',
       foundingYear: 2021,
       location: 'Chicago, IL',
@@ -142,24 +225,10 @@ const simulateAutoGenExecution = async (conversation, parameters) => {
         'InsureTech raises $15M to automate insurance claims',
         'InsureTech partners with major insurance providers'
       ],
-      websiteUrl: 'https://insuretech.io'
-    },
-    {
-      name: 'FinanceGPT',
-      foundingYear: 2023,
-      location: 'Toronto, Canada',
-      focusArea: 'AI Financial Advising',
-      investors: ['OMERS Ventures', 'Georgian'],
-      fundingAmount: '$7M',
-      newsHeadlines: [
-        'FinanceGPT emerges from stealth with $7M seed funding',
-        'FinanceGPT\'s AI advisor outperforms human financial planners in test'
-      ],
-      websiteUrl: 'https://financegpt.ai'
-    }
-  ];
-  
-  await new Promise(resolve => setTimeout(resolve, 1000));
+      websiteUrl: 'https://insuretech.io',
+      agentSteps: generateAgentSteps('InsureTech')
+    });
+  }
   
   return mockCompanies;
 };

@@ -134,28 +134,147 @@ const defineDiscoveryGoals = (parameters) => {
 };
 
 /**
+ * Generate agent reasoning steps for a company
+ * @param {string} companyName - Name of the company
+ * @returns {Array} Agent reasoning steps
+ */
+const generateAgentSteps = (companyName) => {
+  const coordinatorSteps = [
+    {
+      id: 1,
+      name: 'task_planning',
+      description: `Research Coordinator: Planning research strategy for ${companyName}.`,
+      completed: true,
+      result: `Research plan created with 3 phases: data collection, data analysis, and relevance assessment. Delegating tasks to specialized agents.`,
+      timestamp: new Date(Date.now() - 24000)
+    },
+    {
+      id: 2,
+      name: 'task_delegation',
+      description: `Research Coordinator: Delegating ${companyName} research tasks to specialized agents.`,
+      completed: true,
+      result: `Tasks delegated: Web Scraper and News Reader assigned to data collection. Entity Extractor and Relevance Scorer assigned to data processing and analysis.`,
+      timestamp: new Date(Date.now() - 21000)
+    }
+  ];
+  
+  const dataCollectorSteps = [
+    {
+      id: 3,
+      name: 'source_identification',
+      description: `Data Collector: Identifying reliable sources for ${companyName} information.`,
+      completed: true,
+      result: `Identified 8 reliable sources: company website, LinkedIn profile, Crunchbase (public data), TechCrunch (3 articles), Yahoo Finance, and AngelList.`,
+      timestamp: new Date(Date.now() - 18000)
+    }
+  ];
+  
+  const webScraperSteps = [
+    {
+      id: 4,
+      name: 'website_scraping',
+      description: `Web Scraper: Extracting data from ${companyName}'s website and public profiles.`,
+      completed: true,
+      result: `Successfully scraped company website, LinkedIn profile, and Crunchbase listing. Extracted founding year (2020), headquarters location (Zurich), and focus area (Crypto).`,
+      timestamp: new Date(Date.now() - 15000)
+    }
+  ];
+  
+  const newsReaderSteps = [
+    {
+      id: 5,
+      name: 'news_analysis',
+      description: `News Reader: Analyzing recent news articles about ${companyName}.`,
+      completed: true,
+      result: `Analyzed 5 recent news articles. Extracted key information: funding round ($22M), investor details (Polychain Capital, Paradigm), and recent partnerships with major exchanges.`,
+      timestamp: new Date(Date.now() - 12000)
+    }
+  ];
+  
+  const dataAnalyzerSteps = [
+    {
+      id: 6,
+      name: 'data_consolidation',
+      description: `Data Analyzer: Consolidating collected information about ${companyName}.`,
+      completed: true,
+      result: `Consolidated all data points from Web Scraper and News Reader. Created structured company profile with 8 key attributes. Identified 2 data conflicts and resolved them.`,
+      timestamp: new Date(Date.now() - 9000)
+    }
+  ];
+  
+  const entityExtractorSteps = [
+    {
+      id: 7,
+      name: 'entity_extraction',
+      description: `Entity Extractor: Identifying key entities related to ${companyName}.`,
+      completed: true,
+      result: `Extracted 15 key entities: 2 founders, 3 executives, 2 investors, 3 competitors, 3 partners, and 2 products. Created entity relationship map.`,
+      timestamp: new Date(Date.now() - 6000)
+    }
+  ];
+  
+  const relevanceScorerSteps = [
+    {
+      id: 8,
+      name: 'relevance_calculation',
+      description: `Relevance Scorer: Calculating strategic relevance of ${companyName} to banking sector.`,
+      completed: true,
+      result: `Applied weighted scoring model: Funding Stage (28/30), Market Buzz (25/30), Strategic Relevance (36/40). Total score: 89/100. Company shows high strategic relevance due to innovative security protocols for financial transactions.`,
+      timestamp: new Date(Date.now() - 3000)
+    },
+    {
+      id: 9,
+      name: 'final_assessment',
+      description: `Relevance Scorer: Generating final assessment for ${companyName}.`,
+      completed: true,
+      result: `Final assessment complete. ${companyName} is a high-potential crypto security company with strong investor backing and significant strategic relevance to banking operations. Recommended for further evaluation.`,
+      timestamp: new Date()
+    }
+  ];
+  
+  return [
+    ...coordinatorSteps,
+    ...dataCollectorSteps,
+    ...webScraperSteps,
+    ...newsReaderSteps,
+    ...dataAnalyzerSteps,
+    ...entityExtractorSteps,
+    ...relevanceScorerSteps
+  ];
+};
+
+/**
  * Simulate LettaAI execution
  * @param {Object} agentHierarchy - Agent hierarchy
  * @param {Array} goals - List of goals
  * @returns {Promise<Array>} Discovered companies
  */
 const simulateLettaAIExecution = async (agentHierarchy, goals) => {
+  const companyName = goals[0]?.criteria?.companyName || 'BlockSecure';
+  
+  const steps = generateAgentSteps(companyName);
+  
+  await new Promise(resolve => setTimeout(resolve, 2000));
   
   const mockCompanies = [
     {
-      name: 'BlockSecure',
+      name: companyName,
       foundingYear: 2020,
       location: 'Zurich, Switzerland',
       focusArea: 'Crypto',
       investors: ['Polychain Capital', 'Paradigm'],
       fundingAmount: '$22M',
       newsHeadlines: [
-        'BlockSecure develops new security protocol for DeFi applications',
-        'BlockSecure partners with major exchanges to enhance security'
+        `${companyName} develops new security protocol for DeFi applications`,
+        `${companyName} partners with major exchanges to enhance security`
       ],
-      websiteUrl: 'https://blocksecure.io'
-    },
-    {
+      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.io`,
+      agentSteps: steps
+    }
+  ];
+  
+  if (companyName !== 'BlockSecure') {
+    mockCompanies.push({
       name: 'PaymentStream',
       foundingYear: 2019,
       location: 'Singapore',
@@ -166,50 +285,10 @@ const simulateLettaAIExecution = async (agentHierarchy, goals) => {
         'PaymentStream launches real-time cross-border payment solution',
         'PaymentStream reduces transaction costs by 80% for businesses'
       ],
-      websiteUrl: 'https://paymentstream.com'
-    },
-    {
-      name: 'WealthMatrix',
-      foundingYear: 2021,
-      location: 'Toronto, Canada',
-      focusArea: 'WealthTech',
-      investors: ['OMERS Ventures', 'Portag3 Ventures'],
-      fundingAmount: '$15M',
-      newsHeadlines: [
-        'WealthMatrix introduces AI-powered portfolio optimization',
-        'WealthMatrix partners with major Canadian banks'
-      ],
-      websiteUrl: 'https://wealthmatrix.ai'
-    },
-    {
-      name: 'LendFlex',
-      foundingYear: 2020,
-      location: 'Berlin, Germany',
-      focusArea: 'Lending',
-      investors: ['Earlybird Venture Capital', 'Creandum'],
-      fundingAmount: '$18M',
-      newsHeadlines: [
-        'LendFlex revolutionizes SME lending with flexible terms',
-        'LendFlex expands to five new European markets'
-      ],
-      websiteUrl: 'https://lendflex.io'
-    },
-    {
-      name: 'InsurePal',
-      foundingYear: 2022,
-      location: 'Paris, France',
-      focusArea: 'InsurTech',
-      investors: ['Kima Ventures', 'Partech'],
-      fundingAmount: '$7M',
-      newsHeadlines: [
-        'InsurePal uses social proof to reduce insurance premiums',
-        'InsurePal launches innovative peer-to-peer insurance model'
-      ],
-      websiteUrl: 'https://insurepal.io'
-    }
-  ];
-  
-  await new Promise(resolve => setTimeout(resolve, 2000));
+      websiteUrl: 'https://paymentstream.com',
+      agentSteps: generateAgentSteps('PaymentStream')
+    });
+  }
   
   return mockCompanies;
 };

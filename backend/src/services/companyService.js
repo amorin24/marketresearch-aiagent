@@ -236,81 +236,26 @@ const startCompanyResearch = async (companyName, frameworkNames) => {
         jobData.frameworkStatuses[frameworkName].status = 'running';
         discoveryJobs.set(jobId, jobData);
         
-        const researchSteps = [
-          {
-            id: 1,
-            name: 'discovery',
-            description: `Searching public fintech databases for ${companyName}`,
-            completed: false,
-            result: null,
-            timestamp: new Date()
-          },
-          {
-            id: 2,
-            name: 'extraction',
-            description: 'Retrieving and extracting company data',
-            completed: false,
-            result: null,
-            timestamp: null
-          },
-          {
-            id: 3,
-            name: 'analysis',
-            description: 'Analyzing company information',
-            completed: false,
-            result: null,
-            timestamp: null
-          },
-          {
-            id: 4,
-            name: 'scoring',
-            description: 'Applying scoring model',
-            completed: false,
-            result: null,
-            timestamp: null
-          },
-          {
-            id: 5,
-            name: 'summary',
-            description: 'Generating summary',
-            completed: false,
-            result: null,
-            timestamp: null
-          }
-        ];
+        const discoveredCompanies = await framework.discoverCompanies({ companyName });
         
-        jobData.frameworkStatuses[frameworkName].steps = researchSteps;
+        let agentSteps = [];
+        if (!discoveredCompanies || !discoveredCompanies[0]) {
+          logger.warn(`No companies discovered for "${companyName}" using framework "${frameworkName}". Defaulting agentSteps to an empty array.`);
+        } else if (!discoveredCompanies[0].agentSteps) {
+          logger.warn(`No agentSteps found for the first discovered company for "${companyName}" using framework "${frameworkName}". Defaulting agentSteps to an empty array.`);
+        } else {
+          agentSteps = discoveredCompanies[0].agentSteps;
+        }
+        
+        jobData.frameworkStatuses[frameworkName].steps = agentSteps;
         discoveryJobs.set(jobId, jobData);
         
-        for (const step of researchSteps) {
-          jobData.frameworkStatuses[frameworkName].steps[step.id - 1].timestamp = new Date();
-          discoveryJobs.set(jobId, jobData);
-          
-          await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
-          
-          jobData = discoveryJobs.get(jobId);
-          jobData.frameworkStatuses[frameworkName].steps[step.id - 1].completed = true;
-          jobData.frameworkStatuses[frameworkName].progress = (step.id / researchSteps.length) * 100;
-          
-          if (step.name === 'discovery') {
-            jobData.frameworkStatuses[frameworkName].steps[step.id - 1].result = 
-              `Found ${companyName} in public databases`;
-          } else if (step.name === 'extraction') {
-            jobData.frameworkStatuses[frameworkName].steps[step.id - 1].result = 
-              `Retrieved 3 funding articles from TechCrunch`;
-          } else if (step.name === 'analysis') {
-            jobData.frameworkStatuses[frameworkName].steps[step.id - 1].result = 
-              `Extracted founding year and investor list`;
-          } else if (step.name === 'scoring') {
-            jobData.frameworkStatuses[frameworkName].steps[step.id - 1].result = 
-              `Applied scoring model with configured weights`;
-          } else if (step.name === 'summary') {
-            jobData.frameworkStatuses[frameworkName].steps[step.id - 1].result = 
-              `Generated company profile and summary`;
-          }
-          
-          discoveryJobs.set(jobId, jobData);
-        }
+        // Update progress based on the number of steps
+        jobData = discoveryJobs.get(jobId);
+        jobData.frameworkStatuses[frameworkName].progress = 100; // All steps are already completed
+        discoveryJobs.set(jobId, jobData);
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Generate a company result for this framework
         const company = {
