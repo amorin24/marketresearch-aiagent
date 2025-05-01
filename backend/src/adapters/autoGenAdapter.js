@@ -26,7 +26,7 @@ const config = {
 };
 
 /**
- * Discover fintech companies using AutoGen
+ * Discover companies using AutoGen
  * @param {Object} parameters - Discovery parameters
  * @returns {Promise<Array>} Discovered companies
  */
@@ -76,7 +76,7 @@ const createResearchAssistant = () => {
       model: 'gpt-4',
       temperature: 0.2
     },
-    system_message: 'You are a fintech industry research expert. Your task is to discover emerging fintech companies from public sources.'
+    system_message: 'You are a market research expert. Your task is to discover companies from public sources.'
   };
 };
 
@@ -92,7 +92,7 @@ const createDataAnalyst = () => {
       model: 'gpt-4',
       temperature: 0.1
     },
-    system_message: 'You are a data analyst specializing in fintech companies. Your task is to extract and structure information about companies.'
+    system_message: 'You are a data analyst specializing in company data. Your task is to extract and structure information about companies.'
   };
 };
 
@@ -104,7 +104,7 @@ const createDataAnalyst = () => {
 const createConversation = (agents) => {
   return {
     agents,
-    initial_message: 'Find emerging fintech companies and extract their key information.',
+    initial_message: 'Find companies and extract their key information.',
     max_turns: 15
   };
 };
@@ -138,9 +138,9 @@ const generateAgentSteps = (companyName) => {
     {
       id: 3,
       name: 'information_gathering',
-      description: `ResearchAssistant: Searching for ${companyName} across financial databases, news sources, and public records.`,
+      description: `ResearchAssistant: Searching for ${companyName} across business databases, news sources, and public records.`,
       completed: true,
-      result: `Found ${companyName} mentioned in 5 recent TechCrunch articles, LinkedIn company profile, and AngelList. Company appears to be active in the fintech sector with recent funding activity.`,
+      result: `Found ${companyName} mentioned in 5 recent articles, LinkedIn company profile, and public listings. Company appears to be active with recent business and funding activity.`,
       timestamp: new Date(Date.now() - 12000)
     },
     {
@@ -159,7 +159,7 @@ const generateAgentSteps = (companyName) => {
       name: 'data_extraction',
       description: `DataAnalyst: Extracting structured data about ${companyName} from verified sources.`,
       completed: true,
-      result: `Extracted founding year (2022), headquarters (Austin, TX), focus area (Blockchain Payments), investor information, and funding details ($18M).`,
+      result: `Extracted founding year (2022), headquarters (Austin, TX), focus area (Technology), investor information, and funding details ($18M).`,
       timestamp: new Date(Date.now() - 6000)
     },
     {
@@ -167,11 +167,19 @@ const generateAgentSteps = (companyName) => {
       name: 'data_analysis',
       description: `DataAnalyst: Analyzing ${companyName}'s market position and strategic relevance.`,
       completed: true,
-      result: `Analysis complete: ${companyName} is positioned in the high-growth blockchain payments sector with strong investor backing and significant market potential. Strategic relevance to banking operations is high due to innovative settlement technology.`,
+      result: `Analysis complete: ${companyName} is positioned in the high-growth technology sector with strong investor backing and significant market potential. Strategic relevance to its industry is high due to innovative technology.`,
       timestamp: new Date(Date.now() - 3000)
     },
     {
       id: 7,
+      name: 'stock_check',
+      description: `DataAnalyst: Checking if ${companyName} is publicly traded and retrieving stock information.`,
+      completed: true,
+      result: `Verified public trading status for ${companyName}. Retrieved current stock price, market cap, and recent performance metrics where available.`,
+      timestamp: new Date(Date.now() - 1500)
+    },
+    {
+      id: 8,
       name: 'scoring_calculation',
       description: `DataAnalyst: Calculating weighted score for ${companyName} based on funding, market buzz, and strategic relevance.`,
       completed: true,
@@ -201,32 +209,52 @@ const simulateAutoGenExecution = async (conversation, parameters) => {
       name: companyName,
       foundingYear: 2022,
       location: 'Austin, TX',
-      focusArea: 'Blockchain Payments',
-      investors: ['Blockchain Capital', 'Pantera Capital'],
+      focusArea: 'Technology',
+      investors: ['Sequoia Capital', 'Andreessen Horowitz'],
       fundingAmount: '$18M',
       newsHeadlines: [
-        `${companyName} secures $18M to bridge traditional finance with blockchain`,
-        `${companyName} launches merchant integration platform`
+        `${companyName} secures $18M to develop innovative technology solutions`,
+        `${companyName} launches new platform for enterprise customers`
       ],
       websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.tech`,
+      isPublic: Math.random() > 0.5, // Randomly determine if company is public
+      stockSymbol: companyName.substring(0, 4).toUpperCase(),
+      stockPrice: Math.random() > 0.5 ? {
+        symbol: companyName.substring(0, 4).toUpperCase(),
+        currentPrice: 78.25 + (Math.random() * 40 - 20),
+        change: Math.random() * 8 - 4,
+        changePercent: Math.random() * 5 - 2.5,
+        marketCap: '$2.8B',
+        lastUpdated: new Date().toISOString()
+      } : null,
       agentSteps: steps
     }
   ];
   
   if (companyName !== 'BlockPay') {
     mockCompanies.push({
-      name: 'InsureTech',
+      name: 'DataVision',
       foundingYear: 2021,
       location: 'Chicago, IL',
-      focusArea: 'InsurTech',
-      investors: ['Allianz Ventures', 'Munich Re Ventures'],
+      focusArea: 'AI and Machine Learning',
+      investors: ['Google Ventures', 'Accel Partners'],
       fundingAmount: '$15M',
       newsHeadlines: [
-        'InsureTech raises $15M to automate insurance claims',
-        'InsureTech partners with major insurance providers'
+        'DataVision raises $15M to advance AI solutions',
+        'DataVision partners with major technology providers'
       ],
-      websiteUrl: 'https://insuretech.io',
-      agentSteps: generateAgentSteps('InsureTech')
+      websiteUrl: 'https://datavision.ai',
+      isPublic: true,
+      stockSymbol: 'DATA',
+      stockPrice: {
+        symbol: 'DATA',
+        currentPrice: 64.50,
+        change: 2.25,
+        changePercent: 3.61,
+        marketCap: '$1.5B',
+        lastUpdated: new Date().toISOString()
+      },
+      agentSteps: generateAgentSteps('DataVision')
     });
   }
   

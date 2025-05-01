@@ -24,7 +24,7 @@ const config = {
 };
 
 /**
- * Discover fintech companies using SquidAI
+ * Discover companies using SquidAI
  * @param {Object} parameters - Discovery parameters
  * @returns {Promise<Array>} Discovered companies
  */
@@ -53,7 +53,7 @@ const discoverCompanies = async (parameters = {}) => {
  */
 const initializeSquidAI = () => {
   return {
-    name: 'FinTech Research Environment',
+    name: 'Company Research Environment',
     agents: [
       {
         id: 'searcher',
@@ -83,7 +83,7 @@ const defineDiscoveryTasks = () => {
   return [
     {
       id: 'search',
-      description: 'Search for emerging fintech companies',
+      description: 'Search for companies',
       agent: 'searcher',
       inputs: [],
       outputs: ['company_urls']
@@ -115,9 +115,9 @@ const generateAgentSteps = (companyName) => {
     {
       id: 1,
       name: 'search_initialization',
-      description: `Searcher agent initializing search for ${companyName} in fintech space.`,
+      description: `Searcher agent initializing search for ${companyName}.`,
       completed: true,
-      result: `Search initialized with parameters: company_name="${companyName}", sector="fintech", data_sources=["public_web", "news_apis", "financial_databases"].`,
+      result: `Search initialized with parameters: company_name="${companyName}", data_sources=["public_web", "news_apis", "business_databases"].`,
       timestamp: new Date(Date.now() - 20000)
     },
     {
@@ -136,7 +136,7 @@ const generateAgentSteps = (companyName) => {
       name: 'data_extraction',
       description: `Extractor agent parsing information about ${companyName} from search results.`,
       completed: true,
-      result: `Extracted core company data: founding year (2019), headquarters (Chicago), focus area (Lending), funding details ($15M), and key investors.`,
+      result: `Extracted core company data: founding year (2019), headquarters (Chicago), focus area (Technology), funding details ($15M), and key investors.`,
       timestamp: new Date(Date.now() - 12000)
     },
     {
@@ -155,15 +155,23 @@ const generateAgentSteps = (companyName) => {
       name: 'market_analysis',
       description: `Analyzer agent evaluating ${companyName}'s market position and growth trajectory.`,
       completed: true,
-      result: `Market analysis complete. ${companyName} operates in the high-growth lending automation segment with 35% YoY market expansion. Company shows strong competitive positioning with proprietary loan approval algorithm.`,
+      result: `Market analysis complete. ${companyName} operates in the high-growth technology sector with 35% YoY market expansion. Company shows strong competitive positioning with proprietary data analytics algorithms.`,
       timestamp: new Date(Date.now() - 4000)
     },
     {
       id: 6,
+      name: 'stock_check',
+      description: `Analyzer agent checking if ${companyName} is publicly traded and retrieving stock information.`,
+      completed: true,
+      result: `Stock check complete. Verified public trading status and retrieved current stock price, market cap, and recent performance metrics where available.`,
+      timestamp: new Date(Date.now() - 2000)
+    },
+    {
+      id: 7,
       name: 'relevance_scoring',
       description: `Analyzer agent calculating strategic relevance score for ${companyName}.`,
       completed: true,
-      result: `Relevance scoring complete. Funding Stage: 24/30 (Series A with strong investors). Market Buzz: 26/30 (high media coverage, positive sentiment). Strategic Relevance: 32/40 (strong alignment with banking modernization trends). Total Score: 82/100.`,
+      result: `Relevance scoring complete. Funding Stage: 24/30 (Series A with strong investors). Market Buzz: 26/30 (high media coverage, positive sentiment). Strategic Relevance: 32/40 (strong alignment with industry innovation trends). Total Score: 82/100.`,
       timestamp: new Date()
     }
   ];
@@ -190,32 +198,52 @@ const simulateSquidAIExecution = async (squid, tasks, parameters) => {
       name: companyName,
       foundingYear: 2019,
       location: 'Chicago, IL',
-      focusArea: 'Lending',
+      focusArea: 'Technology',
       investors: ['Y Combinator', 'Lightspeed Venture Partners'],
       fundingAmount: '$15M',
       newsHeadlines: [
-        `${companyName} introduces 5-minute loan approval process`,
-        `${companyName} partners with major banks for loan origination`
+        `${companyName} introduces innovative data processing technology`,
+        `${companyName} partners with major enterprises for technology integration`
       ],
       websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.io`,
+      isPublic: Math.random() > 0.5, // Randomly determine if company is public
+      stockSymbol: companyName.substring(0, 4).toUpperCase(),
+      stockPrice: Math.random() > 0.5 ? {
+        symbol: companyName.substring(0, 4).toUpperCase(),
+        currentPrice: 68.75 + (Math.random() * 20 - 10),
+        change: Math.random() * 5 - 2.5,
+        changePercent: Math.random() * 3 - 1.5,
+        marketCap: '$1.8B',
+        lastUpdated: new Date().toISOString()
+      } : null,
       agentSteps: steps
     }
   ];
   
   if (companyName !== 'LoanQuick') {
     mockCompanies.push({
-      name: 'InsureTech',
+      name: 'TechVision',
       foundingYear: 2020,
       location: 'Austin, TX',
-      focusArea: 'InsurTech',
+      focusArea: 'Artificial Intelligence',
       investors: ['Founders Fund', 'General Catalyst'],
       fundingAmount: '$18M',
       newsHeadlines: [
-        'InsureTech launches AI-powered insurance marketplace',
-        'InsureTech expands coverage options for gig economy workers'
+        'TechVision launches AI-powered analytics platform',
+        'TechVision expands enterprise solutions for remote workforce'
       ],
-      websiteUrl: 'https://insuretech.com',
-      agentSteps: generateAgentSteps('InsureTech')
+      websiteUrl: 'https://techvision.ai',
+      isPublic: true,
+      stockSymbol: 'TCVN',
+      stockPrice: {
+        symbol: 'TCVN',
+        currentPrice: 42.30,
+        change: 1.75,
+        changePercent: 4.31,
+        marketCap: '$950M',
+        lastUpdated: new Date().toISOString()
+      },
+      agentSteps: generateAgentSteps('TechVision')
     });
   }
   
