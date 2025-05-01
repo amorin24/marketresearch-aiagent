@@ -1,6 +1,10 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { logger } = require('../index');
+const { 
+  ValidationError, 
+  ServiceUnavailableError 
+} = require('../utils/errorHandler');
 
 const SCORING_CONFIG_PATH = path.join(__dirname, '../config/scoring.json');
 const DATA_SOURCE_CONFIG_PATH = path.join(__dirname, '../config/datasources.json');
@@ -40,7 +44,7 @@ const getScoringConfig = async () => {
     return JSON.parse(data);
   } catch (error) {
     logger.error(`Error reading scoring config: ${error.message}`);
-    throw error;
+    throw new ServiceUnavailableError('Failed to read scoring configuration');
   }
 };
 
@@ -63,7 +67,7 @@ const updateScoringConfig = async (weights) => {
     
     const sum = Object.values(updatedConfig.weights).reduce((a, b) => a + b, 0);
     if (Math.abs(sum - 1) > 0.001) {
-      throw new Error(`Weights must sum to 1, got ${sum}`);
+      throw new ValidationError(`Weights must sum to 1, got ${sum}`);
     }
     
     await fs.writeFile(SCORING_CONFIG_PATH, JSON.stringify(updatedConfig, null, 2), 'utf8');
@@ -71,7 +75,7 @@ const updateScoringConfig = async (weights) => {
     return updatedConfig;
   } catch (error) {
     logger.error(`Error updating scoring config: ${error.message}`);
-    throw error;
+    throw new ServiceUnavailableError('Failed to update scoring configuration');
   }
 };
 
@@ -89,11 +93,11 @@ const getDataSourceConfig = async () => {
         await fs.writeFile(DATA_SOURCE_CONFIG_PATH, JSON.stringify(DEFAULT_DATA_SOURCE_CONFIG, null, 2), 'utf8');
         return DEFAULT_DATA_SOURCE_CONFIG;
       }
-      throw error;
+      throw new ServiceUnavailableError('Failed to access data source configuration file');
     }
   } catch (error) {
     logger.error(`Error reading data source config: ${error.message}`);
-    throw error;
+    throw new ServiceUnavailableError('Failed to read data source configuration');
   }
 };
 
@@ -119,7 +123,7 @@ const updateDataSourceConfig = async (sources) => {
     return updatedConfig;
   } catch (error) {
     logger.error(`Error updating data source config: ${error.message}`);
-    throw error;
+    throw new ServiceUnavailableError('Failed to update data source configuration');
   }
 };
 

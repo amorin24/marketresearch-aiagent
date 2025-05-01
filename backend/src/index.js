@@ -45,10 +45,9 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-app.use((err, req, res, next) => {
-  logger.error(`${err.message}\n${err.stack}`);
-  res.status(500).json({ error: 'Internal Server Error', message: err.message });
-});
+const { globalErrorHandler } = require('./utils/errorHandler');
+
+app.use(globalErrorHandler);
 
 app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
