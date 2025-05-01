@@ -1,8 +1,13 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const express = require('express');
-const cors = require('cors');
 const winston = require('winston');
+
+const { 
+  configureCors, 
+  configureRateLimit, 
+  configureHelmet 
+} = require('./middleware/security');
 
 const logger = winston.createLogger({
   level: 'info',
@@ -29,13 +34,21 @@ const PORT = process.env.PORT || 8000;
 
 emailService.initializeEmailService();
 
-app.use(cors());
-app.use(express.json());
+app.use(configureCors());
+app.use(configureHelmet());
+app.use(express.json({ limit: '1mb' })); // Limit payload size
 
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url}`);
   next();
 });
+
+const apiLimiter = configureRateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+
+app.use('/api', apiLimiter);
 
 app.use('/api/companies', companyRoutes);
 app.use('/api/frameworks', frameworkRoutes);

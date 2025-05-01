@@ -34,6 +34,10 @@ const initializeEmailService = () => {
         user,
         pass,
       },
+      tls: {
+        rejectUnauthorized: true,
+        minVersion: 'TLSv1.2'
+      }
     });
     
     logger.info('Email service initialized successfully');
