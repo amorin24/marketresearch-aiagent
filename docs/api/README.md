@@ -43,6 +43,8 @@ Returns a list of all discovered companies.
       "PayFast expands to European markets"
     ],
     "websiteUrl": "https://payfast.io",
+    "stockPrice": "127.45",
+    "stockSymbol": "PYFT",
     "score": 85,
     "discoveredBy": "crewAI",
     "discoveredAt": "2023-11-15T12:30:45Z"
@@ -163,6 +165,113 @@ For JSON format, returns a JSON array of companies.
 
 For CSV format, returns a CSV file with company data.
 
+#### Research Company
+
+```
+POST /companies/research-company
+```
+
+Starts a company research process using the specified frameworks. Optionally sends an email notification when research is complete.
+
+**Request Body**
+
+```json
+{
+  "companyName": "Apple",
+  "frameworks": ["crewAI", "squidAI", "lettaAI", "autoGen", "langGraph"],
+  "email": "user@example.com"  // Optional
+}
+```
+
+**Response**
+
+```json
+{
+  "jobId": "job-550e8400-e29b-41d4-a716-446655440000",
+  "status": "research_started"
+}
+```
+
+#### Get Research Status
+
+```
+GET /companies/research-company/:jobId
+```
+
+Returns the status of a company research job.
+
+**Parameters**
+
+- `jobId` (path parameter): The unique identifier of the research job
+
+**Response**
+
+```json
+{
+  "id": "job-550e8400-e29b-41d4-a716-446655440000",
+  "companyName": "Apple",
+  "status": "completed",
+  "startTime": "2023-11-15T12:30:45Z",
+  "endTime": "2023-11-15T12:35:12Z",
+  "error": null,
+  "frameworkStatuses": {
+    "crewAIAdapter": {
+      "status": "completed",
+      "progress": 100,
+      "steps": [
+        {
+          "id": "step-1",
+          "description": "[Research Agent] Searching for company information",
+          "timestamp": "2023-11-15T12:31:00Z",
+          "completed": true
+        },
+        {
+          "id": "step-2",
+          "description": "[Analysis Agent] Evaluating market position",
+          "timestamp": "2023-11-15T12:32:30Z",
+          "completed": true
+        },
+        {
+          "id": "step-3",
+          "description": "[Scoring Agent] Calculating final score",
+          "timestamp": "2023-11-15T12:34:15Z",
+          "completed": true
+        }
+      ],
+      "error": null
+    },
+    "squidAIAdapter": {
+      "status": "completed",
+      "progress": 100,
+      "steps": [
+        // Similar structure to crewAIAdapter
+      ],
+      "error": null
+    }
+  },
+  "frameworkResults": {
+    "crewAIAdapter": {
+      "score": 92,
+      "fundingScore": 28,
+      "buzzScore": 27,
+      "relevanceScore": 37,
+      "summary": "Apple is a leading technology company with strong market position...",
+      "stockPrice": "187.43",
+      "stockSymbol": "AAPL"
+    },
+    "squidAIAdapter": {
+      "score": 88,
+      "fundingScore": 26,
+      "buzzScore": 28,
+      "relevanceScore": 34,
+      "summary": "Apple shows excellent financial performance with high strategic relevance...",
+      "stockPrice": "187.43",
+      "stockSymbol": "AAPL"
+    }
+  }
+}
+```
+
 ### Frameworks
 
 #### Get Available Frameworks
@@ -190,6 +299,16 @@ Returns a list of available AI agent frameworks.
   {
     "name": "lettaAI",
     "description": "LettaAI Framework Adapter",
+    "version": "1.0.0"
+  },
+  {
+    "name": "autoGen",
+    "description": "AutoGen Framework Adapter",
+    "version": "1.0.0"
+  },
+  {
+    "name": "langGraph",
+    "description": "LangGraph/LangChain Framework Adapter",
     "version": "1.0.0"
   }
 ]
