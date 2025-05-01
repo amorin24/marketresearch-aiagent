@@ -4,6 +4,8 @@ import { Framework, ResearchJob } from '../types';
 interface CompanyResearchContextType {
   companyName: string;
   setCompanyName: (name: string) => void;
+  userEmail: string;
+  setUserEmail: (email: string) => void;
   selectedFrameworks: string[];
   toggleFramework: (framework: string) => void;
   selectAllFrameworks: () => void;
@@ -33,6 +35,7 @@ interface CompanyResearchProviderProps {
 
 export const CompanyResearchProvider = ({ children }: CompanyResearchProviderProps) => {
   const [companyName, setCompanyName] = useState<string>('');
+  const [userEmail, setUserEmail] = useState<string>('');
   const [selectedFrameworks, setSelectedFrameworks] = useState<string[]>([]);
   const [isResearching, setIsResearching] = useState<boolean>(false);
   const [researchJob, setResearchJob] = useState<ResearchJob | null>(null);

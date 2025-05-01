@@ -22,9 +22,12 @@ exports.logger = logger;
 const companyRoutes = require('./controllers/companyController');
 const frameworkRoutes = require('./controllers/frameworkController');
 const configRoutes = require('./controllers/configController');
+const emailService = require('./services/emailService');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+
+emailService.initializeEmailService();
 
 app.use(cors());
 app.use(express.json());

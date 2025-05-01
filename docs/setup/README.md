@@ -38,11 +38,12 @@ Create a `.env` file in the backend directory by copying the example:
 cp .env.example .env
 ```
 
-Edit the `.env` file and add your OpenAI API key:
+Edit the `.env` file and add your API keys and configuration:
 
 ```
 # API Keys
 OPENAI_API_KEY=your_openai_api_key_here
+ALPHA_VANTAGE_API_KEY=your_alpha_vantage_api_key_here
 
 # Framework Configuration
 CREWAI_ENABLED=true
@@ -61,6 +62,15 @@ ENABLE_NEWS=true
 # Server Configuration
 PORT=8000
 NODE_ENV=development
+
+# Email Configuration
+EMAIL_ENABLED=false
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=user@example.com
+EMAIL_PASS=password
+EMAIL_FROM=noreply@example.com
 ```
 
 ### 4. Install Frontend Dependencies
@@ -206,6 +216,42 @@ If the frontend cannot connect to the backend:
 - Verify that both containers are running: `docker ps`
 - Check that the backend container is exposing port 8000
 - Ensure the frontend is configured to connect to the correct backend URL
+
+## Stock Price API Setup
+
+To enable stock price retrieval for public companies:
+
+1. Sign up for a free API key at [Alpha Vantage](https://www.alphavantage.co/support/#api-key)
+2. Add your API key to the backend `.env` file:
+   ```
+   ALPHA_VANTAGE_API_KEY=your_api_key_here
+   ```
+3. If using Docker, ensure your API key is included in the environment variables section of the `docker-compose.yml` file:
+   ```yaml
+   environment:
+     - ALPHA_VANTAGE_API_KEY=${ALPHA_VANTAGE_API_KEY:-your_alpha_vantage_api_key_here}
+   ```
+
+Note: The free tier of Alpha Vantage allows 5 API requests per minute and 500 requests per day. Plan your usage accordingly.
+
+## Email Notification Setup
+
+To enable email notifications for completed research tasks:
+
+1. Configure your SMTP settings in the backend `.env` file:
+   ```
+   EMAIL_ENABLED=true
+   EMAIL_HOST=your_smtp_server.com
+   EMAIL_PORT=587
+   EMAIL_SECURE=false
+   EMAIL_USER=your_email_user
+   EMAIL_PASS=your_email_password
+   EMAIL_FROM=noreply@yourdomain.com
+   ```
+
+2. If using Docker, ensure these settings are included in the environment variables section of the `docker-compose.yml` file.
+
+3. When using the platform, users can optionally provide their email address to receive notifications when research tasks are completed.
 
 ## Next Steps
 

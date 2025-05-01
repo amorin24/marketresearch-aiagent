@@ -24,7 +24,7 @@ const config = {
 };
 
 /**
- * Discover fintech companies using LettaAI
+ * Discover companies using LettaAI
  * @param {Object} parameters - Discovery parameters
  * @returns {Promise<Array>} Discovered companies
  */
@@ -99,8 +99,8 @@ const createAgentHierarchy = () => {
 const defineDiscoveryGoals = (parameters) => {
   return [
     {
-      name: 'Identify Fintech Companies',
-      description: 'Find emerging fintech companies from public sources',
+      name: 'Identify Companies',
+      description: 'Find companies from public sources',
       criteria: {
         minCompanies: parameters.minCompanies || 5,
         maxCompanies: parameters.maxCompanies || 20,
@@ -125,7 +125,7 @@ const defineDiscoveryGoals = (parameters) => {
     },
     {
       name: 'Assess Relevance',
-      description: 'Assess the relevance of each company to the financial sector',
+      description: 'Assess the relevance of each company',
       criteria: {
         minRelevanceScore: parameters.minRelevanceScore || 0.6
       }
@@ -175,7 +175,7 @@ const generateAgentSteps = (companyName) => {
       name: 'website_scraping',
       description: `Web Scraper: Extracting data from ${companyName}'s website and public profiles.`,
       completed: true,
-      result: `Successfully scraped company website, LinkedIn profile, and Crunchbase listing. Extracted founding year (2020), headquarters location (Zurich), and focus area (Crypto).`,
+      result: `Successfully scraped company website, LinkedIn profile, and Crunchbase listing. Extracted founding year (2020), headquarters location (Zurich), and focus area (Technology).`,
       timestamp: new Date(Date.now() - 15000)
     }
   ];
@@ -216,18 +216,26 @@ const generateAgentSteps = (companyName) => {
   const relevanceScorerSteps = [
     {
       id: 8,
-      name: 'relevance_calculation',
-      description: `Relevance Scorer: Calculating strategic relevance of ${companyName} to banking sector.`,
+      name: 'stock_check',
+      description: `Relevance Scorer: Checking if ${companyName} is publicly traded and retrieving stock information.`,
       completed: true,
-      result: `Applied weighted scoring model: Funding Stage (28/30), Market Buzz (25/30), Strategic Relevance (36/40). Total score: 89/100. Company shows high strategic relevance due to innovative security protocols for financial transactions.`,
-      timestamp: new Date(Date.now() - 3000)
+      result: `Stock check complete. Verified public trading status and retrieved current stock price, market cap, and recent performance metrics where available.`,
+      timestamp: new Date(Date.now() - 4000)
+    },
+    {
+      id: 9,
+      name: 'relevance_calculation',
+      description: `Relevance Scorer: Calculating strategic relevance of ${companyName}.`,
+      completed: true,
+      result: `Applied weighted scoring model: Funding Stage (28/30), Market Buzz (25/30), Strategic Relevance (36/40). Total score: 89/100. Company shows high strategic relevance due to innovative technology solutions.`,
+      timestamp: new Date(Date.now() - 2000)
     },
     {
       id: 9,
       name: 'final_assessment',
       description: `Relevance Scorer: Generating final assessment for ${companyName}.`,
       completed: true,
-      result: `Final assessment complete. ${companyName} is a high-potential crypto security company with strong investor backing and significant strategic relevance to banking operations. Recommended for further evaluation.`,
+      result: `Final assessment complete. ${companyName} is a high-potential technology company with strong investor backing and significant strategic relevance to industry operations. Recommended for further evaluation.`,
       timestamp: new Date()
     }
   ];
@@ -261,32 +269,52 @@ const simulateLettaAIExecution = async (agentHierarchy, goals) => {
       name: companyName,
       foundingYear: 2020,
       location: 'Zurich, Switzerland',
-      focusArea: 'Crypto',
+      focusArea: 'Technology',
       investors: ['Polychain Capital', 'Paradigm'],
       fundingAmount: '$22M',
       newsHeadlines: [
-        `${companyName} develops new security protocol for DeFi applications`,
-        `${companyName} partners with major exchanges to enhance security`
+        `${companyName} develops new security protocol for enterprise applications`,
+        `${companyName} partners with major technology providers to enhance security`
       ],
       websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.io`,
+      isPublic: Math.random() > 0.5, // Randomly determine if company is public
+      stockSymbol: companyName.substring(0, 4).toUpperCase(),
+      stockPrice: Math.random() > 0.5 ? {
+        symbol: companyName.substring(0, 4).toUpperCase(),
+        currentPrice: 78.45 + (Math.random() * 25 - 12.5),
+        change: Math.random() * 4 - 2,
+        changePercent: Math.random() * 5 - 2.5,
+        marketCap: '$2.4B',
+        lastUpdated: new Date().toISOString()
+      } : null,
       agentSteps: steps
     }
   ];
   
   if (companyName !== 'BlockSecure') {
     mockCompanies.push({
-      name: 'PaymentStream',
+      name: 'TechStream',
       foundingYear: 2019,
       location: 'Singapore',
-      focusArea: 'Payments',
+      focusArea: 'Technology',
       investors: ['Temasek', 'GIC'],
       fundingAmount: '$30M',
       newsHeadlines: [
-        'PaymentStream launches real-time cross-border payment solution',
-        'PaymentStream reduces transaction costs by 80% for businesses'
+        'TechStream launches real-time data processing solution',
+        'TechStream reduces operational costs by 80% for businesses'
       ],
-      websiteUrl: 'https://paymentstream.com',
-      agentSteps: generateAgentSteps('PaymentStream')
+      websiteUrl: 'https://techstream.com',
+      isPublic: true,
+      stockSymbol: 'TSTR',
+      stockPrice: {
+        symbol: 'TSTR',
+        currentPrice: 63.20,
+        change: 2.15,
+        changePercent: 3.52,
+        marketCap: '$1.9B',
+        lastUpdated: new Date().toISOString()
+      },
+      agentSteps: generateAgentSteps('TechStream')
     });
   }
   

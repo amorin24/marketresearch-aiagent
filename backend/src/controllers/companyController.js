@@ -75,7 +75,7 @@ router.get('/export/:format', async (req, res) => {
 
 router.post('/research-company', async (req, res) => {
   try {
-    const { companyName, frameworks } = req.body;
+    const { companyName, frameworks, email } = req.body;
     if (!companyName) {
       return res.status(400).json({ error: 'Company name must be specified' });
     }
@@ -84,7 +84,7 @@ router.post('/research-company', async (req, res) => {
       return res.status(400).json({ error: 'At least one framework must be specified' });
     }
     
-    const jobId = await companyService.startCompanyResearch(companyName, frameworks);
+    const jobId = await companyService.startCompanyResearch(companyName, frameworks, email);
     res.json({ jobId, status: 'research_started' });
   } catch (error) {
     logger.error(`Error starting company research: ${error.message}`);

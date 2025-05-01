@@ -27,7 +27,7 @@ const config = {
 };
 
 /**
- * Discover fintech companies using LangGraph/LangChain
+ * Discover companies using LangGraph/LangChain
  * @param {Object} parameters - Discovery parameters
  * @returns {Promise<Array>} Discovered companies
  */
@@ -58,7 +58,7 @@ const discoverCompanies = async (parameters = {}) => {
 const createResearchNode = () => {
   return {
     name: 'research',
-    description: 'Research emerging fintech companies',
+    description: 'Research companies',
     tools: ['web_search', 'news_retriever'],
     model: 'gpt-4',
     memory: true
@@ -121,7 +121,7 @@ const generateAgentSteps = (companyName) => {
       name: 'initial_search',
       description: `[Research Node] Initiating search for ${companyName} across financial databases and news sources.`,
       completed: true,
-      result: `Located ${companyName} in multiple fintech databases. Company appears to be active in the alternative lending space with recent funding activity.`,
+      result: `Located ${companyName} in multiple business databases. Company appears to be active with recent business and funding activity.`,
       timestamp: new Date(Date.now() - 18000)
     },
     {
@@ -140,7 +140,7 @@ const generateAgentSteps = (companyName) => {
       name: 'structured_extraction',
       description: `[Extraction Node] Extracting structured information about ${companyName} from collected data.`,
       completed: true,
-      result: `Successfully extracted key attributes: founding year (2022), headquarters location (London), focus area (Alternative Lending), investor information, and funding details (£12M).`,
+      result: `Successfully extracted key attributes: founding year (2022), headquarters location (London), focus area (Technology), investor information, and funding details (£12M).`,
       timestamp: new Date(Date.now() - 12000)
     },
     {
@@ -159,19 +159,27 @@ const generateAgentSteps = (companyName) => {
       name: 'market_analysis',
       description: `[Analysis Node] Analyzing ${companyName}'s market position and competitive landscape.`,
       completed: true,
-      result: `Completed market analysis. ${companyName} operates in the growing alternative lending sector with 3 main competitors. Company differentiates through proprietary data analytics for risk assessment.`,
+      result: `Completed market analysis. ${companyName} operates in the growing technology sector with 3 main competitors. Company differentiates through proprietary data analytics and innovative solutions.`,
       timestamp: new Date(Date.now() - 6000)
     },
     {
       id: 6,
       name: 'strategic_relevance',
-      description: `[Analysis Node] Evaluating strategic relevance of ${companyName} to banking operations.`,
+      description: `[Analysis Node] Evaluating strategic relevance of ${companyName} to industry operations.`,
       completed: true,
-      result: `Strategic relevance assessment complete. ${companyName}'s alternative data approach to lending decisions has high relevance (38/40) to traditional banking operations seeking to modernize risk assessment.`,
+      result: `Strategic relevance assessment complete. ${companyName}'s innovative approach to data analytics has high relevance (38/40) to industry operations seeking to modernize their technology stack.`,
       timestamp: new Date(Date.now() - 3000)
     },
     {
       id: 7,
+      name: 'stock_check',
+      description: `[Analysis Node] Checking if ${companyName} is publicly traded and retrieving stock information.`,
+      completed: true,
+      result: `Verified public trading status for ${companyName}. Retrieved current stock price, market cap, and recent performance metrics where available.`,
+      timestamp: new Date(Date.now() - 1500)
+    },
+    {
+      id: 8,
       name: 'final_scoring',
       description: `[Analysis Node] Calculating final weighted score for ${companyName}.`,
       completed: true,
@@ -201,32 +209,52 @@ const simulateLangGraphExecution = async (graph, parameters) => {
       name: companyName,
       foundingYear: 2022,
       location: 'London, UK',
-      focusArea: 'Alternative Lending',
+      focusArea: 'Technology',
       investors: ['Index Ventures', 'Accel'],
       fundingAmount: '£12M',
       newsHeadlines: [
-        `${companyName} uses alternative data to revolutionize lending decisions`,
+        `${companyName} uses innovative technology to revolutionize data analytics`,
         `${companyName} expands to European markets with £12M Series A`
       ],
-      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.finance`,
+      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.tech`,
+      isPublic: Math.random() > 0.5, // Randomly determine if company is public
+      stockSymbol: companyName.substring(0, 4).toUpperCase(),
+      stockPrice: Math.random() > 0.5 ? {
+        symbol: companyName.substring(0, 4).toUpperCase(),
+        currentPrice: 92.35 + (Math.random() * 30 - 15),
+        change: Math.random() * 6 - 3,
+        changePercent: Math.random() * 4 - 2,
+        marketCap: '£3.5B',
+        lastUpdated: new Date().toISOString()
+      } : null,
       agentSteps: steps
     }
   ];
   
   if (companyName !== 'DataLend') {
     mockCompanies.push({
-      name: 'RegTechAI',
+      name: 'CloudSecure',
       foundingYear: 2021,
       location: 'Singapore',
-      focusArea: 'Regulatory Technology',
+      focusArea: 'Cybersecurity',
       investors: ['Temasek', 'GIC'],
       fundingAmount: '$20M',
       newsHeadlines: [
-        'RegTechAI raises $20M to automate compliance for financial institutions',
-        'RegTechAI\'s platform reduces compliance costs by 60% in pilot studies'
+        'CloudSecure raises $20M to enhance cloud security solutions',
+        'CloudSecure\'s platform reduces security incidents by 60% in pilot studies'
       ],
-      websiteUrl: 'https://regtechai.com',
-      agentSteps: generateAgentSteps('RegTechAI')
+      websiteUrl: 'https://cloudsecure.tech',
+      isPublic: true,
+      stockSymbol: 'CSEC',
+      stockPrice: {
+        symbol: 'CSEC',
+        currentPrice: 45.75,
+        change: 1.25,
+        changePercent: 2.81,
+        marketCap: '$1.2B',
+        lastUpdated: new Date().toISOString()
+      },
+      agentSteps: generateAgentSteps('CloudSecure')
     });
   }
   

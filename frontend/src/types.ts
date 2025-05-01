@@ -5,6 +5,15 @@ export interface CompanyScoreBreakdown {
   totalScore: number;
 }
 
+export interface StockPrice {
+  symbol?: string;
+  currentPrice?: number;
+  change?: number;
+  changePercent?: number;
+  marketCap?: string;
+  lastUpdated?: string;
+}
+
 export interface Company {
   id: string;
   name: string;
@@ -20,6 +29,10 @@ export interface Company {
   discoveredAt?: string;
   scoreBreakdown?: CompanyScoreBreakdown;
   summary?: string;
+  isPublic?: boolean;
+  stockSymbol?: string;
+  stockPrice?: StockPrice;
+  agentSteps?: ResearchStep[];
 }
 
 export interface Framework {

@@ -7,18 +7,21 @@ A comprehensive platform for evaluating multiple agentic AI frameworks (CrewAI, 
 This platform allows you to:
 
 - Test different AI agent frameworks on the same market research task
-- Discover emerging fintech companies using publicly available data
+- Discover companies across all industries using publicly available data
 - Extract key company attributes and information
 - Score companies dynamically using a weighted scoring model
 - Compare performance metrics across different frameworks
 
 ## Features
 
-- **Multi-Framework Integration**: Seamlessly switch between CrewAI, SquidAI, and LettaAI
+- **Multi-Framework Integration**: Seamlessly switch between CrewAI, SquidAI, LettaAI, AutoGen, and LangGraph
 - **Dynamic Scoring Model**: Configurable weights for different scoring criteria
 - **Public Data Sources**: Uses only publicly accessible information
 - **Modern Web Interface**: React-based UI with TailwindCSS styling
 - **Framework Performance Tracking**: Compare metrics across frameworks
+- **Stock Price Retrieval**: Get real-time stock prices for public companies
+- **Email Notifications**: Receive email alerts when research tasks are completed
+- **Industry-Agnostic Research**: Research companies across all industries, not limited to fintech
 
 ## Quick Start
 
@@ -27,6 +30,8 @@ This platform allows you to:
 - Node.js 16+
 - npm or yarn
 - OpenAI API key (for agent frameworks)
+- Alpha Vantage API key (for stock price retrieval, optional)
+- SMTP server access (for email notifications, optional)
 
 ### Installation
 

@@ -132,11 +132,54 @@ const CompanyDetails = () => {
             <dt className="text-sm font-medium text-gray-500">Discovery Information</dt>
             <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
               <p>Discovered by: <span className="font-medium">{company.discoveredBy}</span></p>
-              <p>Discovered at: <span className="font-medium">{new Date(company.discoveredAt).toLocaleString()}</span></p>
+              <p>Discovered at: <span className="font-medium">{company.discoveredAt ? new Date(company.discoveredAt).toLocaleString() : 'N/A'}</span></p>
             </dd>
           </div>
         </dl>
       </div>
+      {company.isPublic && company.stockPrice && (
+        <div className="border-t border-gray-200">
+          <div className="px-4 py-5 sm:px-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">Stock Information</h3>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">
+              Current market data for {company.name} ({company.stockSymbol})
+            </p>
+          </div>
+          <dl>
+            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt className="text-sm font-medium text-gray-500">Stock Symbol</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{company.stockSymbol}</dd>
+            </div>
+            <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt className="text-sm font-medium text-gray-500">Current Price</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {company.stockPrice.currentPrice !== undefined ? `$${company.stockPrice.currentPrice.toFixed(2)}` : 'N/A'}
+              </dd>
+            </div>
+            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt className="text-sm font-medium text-gray-500">Change</dt>
+              <dd className="mt-1 text-sm sm:mt-0 sm:col-span-2">
+                <span className={(company.stockPrice.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'}>
+                  {(company.stockPrice.change || 0) >= 0 ? '+' : ''}{company.stockPrice.change?.toFixed(2) || '0.00'} 
+                  ({(company.stockPrice.change || 0) >= 0 ? '+' : ''}{company.stockPrice.changePercent?.toFixed(2) || '0.00'}%)
+                </span>
+              </dd>
+            </div>
+            <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt className="text-sm font-medium text-gray-500">Market Cap</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {company.stockPrice.marketCap || 'N/A'}
+              </dd>
+            </div>
+            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {company.stockPrice.lastUpdated ? new Date(company.stockPrice.lastUpdated).toLocaleString() : 'N/A'}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      )}
       <div className="px-4 py-5 sm:px-6">
         <Link
           to="/"

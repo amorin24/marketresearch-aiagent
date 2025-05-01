@@ -24,7 +24,7 @@ const config = {
 };
 
 /**
- * Discover fintech companies using CrewAI
+ * Discover companies using CrewAI
  * @param {Object} parameters - Discovery parameters
  * @returns {Promise<Array>} Discovered companies
  */
@@ -56,8 +56,8 @@ const discoverCompanies = async (parameters = {}) => {
 const createResearchAgent = () => {
   return {
     name: 'Research Agent',
-    role: 'Fintech Industry Researcher',
-    goal: 'Discover emerging fintech companies from public sources',
+    role: 'Market Research Specialist',
+    goal: 'Discover companies from public sources',
     tools: ['web_search', 'news_api']
   };
 };
@@ -82,7 +82,7 @@ const createDataExtractionAgent = () => {
 const createAnalysisAgent = () => {
   return {
     name: 'Analysis Agent',
-    role: 'Financial Analyst',
+    role: 'Business Analyst',
     goal: 'Analyze company data and determine relevance',
     tools: ['data_analysis']
   };
@@ -95,11 +95,11 @@ const createAnalysisAgent = () => {
  */
 const createCrew = (agents) => {
   return {
-    name: 'Fintech Research Crew',
+    name: 'Market Research Crew',
     agents,
     tasks: [
       {
-        description: 'Search for emerging fintech companies',
+        description: 'Search for companies',
         agent: 'Research Agent'
       },
       {
@@ -124,9 +124,9 @@ const generateAgentSteps = (companyName) => {
     {
       id: 1,
       name: 'discovery',
-      description: `I'm searching for information about ${companyName} across multiple fintech databases and news sources.`,
+      description: `I'm searching for information about ${companyName} across multiple databases and news sources.`,
       completed: true,
-      result: `Found ${companyName} in TechCrunch articles and AngelList public listings. The company appears to be in the fintech space with recent activity.`,
+      result: `Found ${companyName} in various articles and public listings. The company appears to be active with recent business activity.`,
       timestamp: new Date(Date.now() - 15000)
     },
     {
@@ -169,10 +169,18 @@ const generateAgentSteps = (companyName) => {
     },
     {
       id: 6,
+      name: 'stock_check',
+      description: `Checking if ${companyName} is a publicly traded company.`,
+      completed: true,
+      result: `Verified public trading status for ${companyName}. Retrieved current stock information if available.`,
+      timestamp: new Date(Date.now() - 1500)
+    },
+    {
+      id: 7,
       name: 'summary',
       description: `Generating comprehensive summary and strategic assessment of ${companyName}.`,
       completed: true,
-      result: `Generated company profile and strategic assessment. ${companyName} shows strong potential in the payments sector with significant recent funding and strategic relevance to banking operations.`,
+      result: `Generated company profile and strategic assessment. ${companyName} shows strong potential in its industry with significant recent funding and strategic market position.`,
       timestamp: new Date()
     }
   ];
@@ -198,32 +206,52 @@ const simulateCrewExecution = async (crew, parameters) => {
       name: companyName,
       foundingYear: 2021,
       location: 'San Francisco, CA',
-      focusArea: 'Payments',
+      focusArea: 'Software',
       investors: ['Sequoia Capital', 'Andreessen Horowitz'],
       fundingAmount: '$25M',
       newsHeadlines: [
-        `${companyName} raises $25M Series A to revolutionize payment processing`,
+        `${companyName} raises $25M Series A to revolutionize software development`,
         `${companyName} expands to European markets`
       ],
       websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.io`,
+      isPublic: Math.random() > 0.5, // Randomly determine if company is public
+      stockSymbol: companyName.substring(0, 4).toUpperCase(),
+      stockPrice: Math.random() > 0.5 ? {
+        symbol: companyName.substring(0, 4).toUpperCase(),
+        currentPrice: 125.75 + (Math.random() * 50 - 25),
+        change: Math.random() * 10 - 5,
+        changePercent: Math.random() * 6 - 3,
+        marketCap: '$4.2B',
+        lastUpdated: new Date().toISOString()
+      } : null,
       agentSteps: steps
     }
   ];
   
   if (companyName !== 'PayFast') {
     mockCompanies.push({
-      name: 'CryptoLend',
+      name: 'TechInnovate',
       foundingYear: 2020,
       location: 'New York, NY',
-      focusArea: 'Crypto',
-      investors: ['Coinbase Ventures', 'Digital Currency Group'],
-      fundingAmount: '$12M',
+      focusArea: 'AI',
+      investors: ['Google Ventures', 'Accel Partners'],
+      fundingAmount: '$18M',
       newsHeadlines: [
-        'CryptoLend introduces new DeFi lending platform',
-        'CryptoLend partners with major exchanges'
+        'TechInnovate launches new AI platform',
+        'TechInnovate partners with major tech companies'
       ],
-      websiteUrl: 'https://cryptolend.finance',
-      agentSteps: generateAgentSteps('CryptoLend')
+      websiteUrl: 'https://techinnovate.ai',
+      isPublic: true,
+      stockSymbol: 'TECH',
+      stockPrice: {
+        symbol: 'TECH',
+        currentPrice: 87.25,
+        change: 2.75,
+        changePercent: 3.25,
+        marketCap: '$1.8B',
+        lastUpdated: new Date().toISOString()
+      },
+      agentSteps: generateAgentSteps('TechInnovate')
     });
   }
   
