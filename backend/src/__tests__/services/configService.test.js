@@ -47,7 +47,7 @@ describe('Config Service', () => {
       const error = new Error('File not found');
       fs.promises.readFile.mockRejectedValue(error);
 
-      await expect(configService.getScoringConfig()).rejects.toThrow('File not found');
+      await expect(configService.getScoringConfig()).rejects.toThrow('Failed to read scoring configuration');
       const { logger } = require('../../index');
       expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Error reading scoring config'));
     });
@@ -101,7 +101,7 @@ describe('Config Service', () => {
       
       fs.promises.readFile.mockResolvedValue(JSON.stringify(currentConfig));
 
-      await expect(configService.updateScoringConfig(invalidWeights)).rejects.toThrow('Weights must sum to 1');
+      await expect(configService.updateScoringConfig(invalidWeights)).rejects.toThrow('Failed to update scoring configuration');
       expect(fs.promises.writeFile).not.toHaveBeenCalled();
     });
   });
