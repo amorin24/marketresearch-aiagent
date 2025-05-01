@@ -1,5 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const frameworkService = require('./frameworkService');
+const emailService = require('./emailService');
+const stockPriceService = require('./stockPriceService');
 const { logger } = require('../index');
 
 const companies = [];
@@ -155,18 +157,39 @@ const calculateBuzzScore = (company) => {
 const calculateRelevanceScore = (company) => {
   if (!company.focusArea) return 0.5;
   
-  const focusAreaScores = {
+  const industryScores = {
+    'software': 0.8,
+    'hardware': 0.7,
+    'cloud': 0.9,
+    'ai': 0.9,
+    'blockchain': 0.8,
+    'internet': 0.7,
+    
     'payments': 0.9,
     'lending': 0.8,
+    'banking': 0.9,
+    'insurance': 0.7,
+    'wealth': 0.8,
     'crypto': 0.7,
-    'wealthtech': 0.8,
-    'insurtech': 0.7,
-    'regtech': 0.6,
-    'banking': 0.9
+    
+    'healthcare': 0.7,
+    'retail': 0.6,
+    'manufacturing': 0.5,
+    'energy': 0.6,
+    'transportation': 0.6,
+    'media': 0.5,
+    'education': 0.5
   };
   
   const focusLower = company.focusArea.toLowerCase();
-  return focusAreaScores[focusLower] || 0.5;
+  
+  for (const [industry, score] of Object.entries(industryScores)) {
+    if (focusLower.includes(industry)) {
+      return score;
+    }
+  }
+  
+  return 0.6; // Default score for unknown industries
 };
 
 /**
@@ -193,9 +216,10 @@ const exportCompanies = async (format) => {
  * Start company research process using multiple frameworks
  * @param {string} companyName - Name of the company to research
  * @param {Array} frameworkNames - Names of the frameworks to use
+ * @param {string} [email] - Optional email for notifications
  * @returns {string} Job ID
  */
-const startCompanyResearch = async (companyName, frameworkNames) => {
+const startCompanyResearch = async (companyName, frameworkNames, email = null) => {
   const jobId = uuidv4();
   
   const researchJob = {
@@ -207,7 +231,8 @@ const startCompanyResearch = async (companyName, frameworkNames) => {
     endTime: null,
     error: null,
     frameworkResults: {},
-    frameworkStatuses: {}
+    frameworkStatuses: {},
+    notificationEmail: email
   };
   
   // Initialize status for each framework
@@ -264,17 +289,35 @@ const startCompanyResearch = async (companyName, frameworkNames) => {
           discoveredBy: frameworkName,
           discoveredAt: new Date(),
           foundingYear: 2010 + Math.floor(Math.random() * 10),
-          location: ['San Francisco, CA', 'New York, NY', 'London, UK'][Math.floor(Math.random() * 3)],
-          focusArea: ['Payments', 'Lending', 'WealthTech', 'Crypto'][Math.floor(Math.random() * 4)],
-          investors: ['Sequoia Capital', 'Andreessen Horowitz', 'Y Combinator'].slice(0, 1 + Math.floor(Math.random() * 3)),
+          location: ['San Francisco, CA', 'New York, NY', 'London, UK', 'Berlin, Germany', 'Toronto, Canada'][Math.floor(Math.random() * 5)],
+          focusArea: ['Software', 'Retail', 'Healthcare', 'Energy', 'Transportation', 'Media', 'AI', 'Cloud Computing'][Math.floor(Math.random() * 8)],
+          investors: ['Sequoia Capital', 'Andreessen Horowitz', 'Y Combinator', 'SoftBank', 'Tiger Global'].slice(0, 1 + Math.floor(Math.random() * 3)),
           fundingAmount: `$${(5 + Math.floor(Math.random() * 95))}M`,
           newsHeadlines: [
             `${companyName} raises new funding round`,
             `${companyName} launches new product`,
             `${companyName} expands to new markets`
           ],
-          websiteUrl: `https://www.${companyName.toLowerCase()}.com`,
+          websiteUrl: `https://www.${companyName.toLowerCase().replace(/\s+/g, '')}.com`,
+          isPublic: false,
+          stockSymbol: null,
+          stockPrice: null
         };
+        
+        try {
+          const stockSymbolData = await stockPriceService.getStockSymbol(companyName);
+          if (stockSymbolData) {
+            company.isPublic = true;
+            company.stockSymbol = stockSymbolData.symbol;
+            
+            const stockPriceData = await stockPriceService.getStockPrice(stockSymbolData.symbol);
+            if (stockPriceData) {
+              company.stockPrice = stockPriceData;
+            }
+          }
+        } catch (error) {
+          logger.error(`Error retrieving stock data for ${companyName}: ${error.message}`);
+        }
         
         company.score = calculateScore(company);
         
@@ -322,6 +365,14 @@ const startCompanyResearch = async (companyName, frameworkNames) => {
     if (allFrameworksComplete()) {
       jobData.status = 'completed';
       jobData.endTime = new Date();
+      
+      if (jobData.notificationEmail) {
+        await emailService.sendResearchCompletionEmail(
+          jobData.notificationEmail,
+          jobData.companyName,
+          jobData
+        );
+      }
     } else {
       jobData.status = 'partial';
     }
