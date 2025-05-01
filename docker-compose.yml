@@ -10,6 +10,14 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8000
+      - ALPHA_VANTAGE_API_KEY=${ALPHA_VANTAGE_API_KEY:-your_alpha_vantage_api_key_here}
+      - EMAIL_ENABLED=${EMAIL_ENABLED:-false}
+      - EMAIL_HOST=${EMAIL_HOST:-smtp.example.com}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_SECURE=${EMAIL_SECURE:-false}
+      - EMAIL_USER=${EMAIL_USER:-user@example.com}
+      - EMAIL_PASS=${EMAIL_PASS:-password}
+      - EMAIL_FROM=${EMAIL_FROM:-noreply@example.com}
       # Add other environment variables as needed
     volumes:
       - ./backend/src:/app/src
