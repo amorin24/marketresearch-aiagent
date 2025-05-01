@@ -59,7 +59,9 @@ describe('Framework Controller', () => {
         .expect('Content-Type', /json/)
         .expect(500);
       
-      expect(response.body).toEqual({ error: 'Failed to fetch frameworks' });
+      expect(response.body).toHaveProperty('message', 'Service error');
+      expect(response.body).toHaveProperty('status', 'error');
+      expect(response.body).toHaveProperty('statusCode', 500);
       expect(logger.error).toHaveBeenCalled();
     });
   });
@@ -90,7 +92,9 @@ describe('Framework Controller', () => {
         .expect('Content-Type', /json/)
         .expect(404);
       
-      expect(response.body).toEqual({ error: 'Framework not found' });
+      expect(response.body).toHaveProperty('message', 'Framework not found');
+      expect(response.body).toHaveProperty('status', 'error');
+      expect(response.body).toHaveProperty('statusCode', 404);
     });
     
     it('should handle errors', async () => {
@@ -103,7 +107,9 @@ describe('Framework Controller', () => {
         .expect('Content-Type', /json/)
         .expect(500);
       
-      expect(response.body).toEqual({ error: 'Failed to fetch framework details' });
+      expect(response.body).toHaveProperty('message', 'Service error');
+      expect(response.body).toHaveProperty('status', 'error');
+      expect(response.body).toHaveProperty('statusCode', 500);
       expect(logger.error).toHaveBeenCalled();
     });
   });
@@ -135,7 +141,9 @@ describe('Framework Controller', () => {
         .expect('Content-Type', /json/)
         .expect(404);
       
-      expect(response.body).toEqual({ error: 'Framework metrics not found' });
+      expect(response.body).toHaveProperty('message', 'Framework metrics not found');
+      expect(response.body).toHaveProperty('status', 'error');
+      expect(response.body).toHaveProperty('statusCode', 404);
     });
   });
   
@@ -178,9 +186,9 @@ describe('Framework Controller', () => {
         .expect('Content-Type', /json/)
         .expect(400);
       
-      expect(response.body).toEqual({ 
-        error: 'At least two frameworks must be specified for comparison' 
-      });
+      expect(response.body).toHaveProperty('message', 'At least two frameworks must be specified for comparison');
+      expect(response.body).toHaveProperty('status', 'error');
+      expect(response.body).toHaveProperty('statusCode', 400);
     });
     
     it('should handle comparison errors', async () => {
@@ -195,7 +203,9 @@ describe('Framework Controller', () => {
         .expect('Content-Type', /json/)
         .expect(500);
       
-      expect(response.body).toEqual({ error: 'Failed to compare frameworks' });
+      expect(response.body).toHaveProperty('message', 'Comparison error');
+      expect(response.body).toHaveProperty('status', 'error');
+      expect(response.body).toHaveProperty('statusCode', 500);
       expect(logger.error).toHaveBeenCalled();
     });
   });
