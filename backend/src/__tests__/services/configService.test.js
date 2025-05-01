@@ -1,120 +1,194 @@
-const configService = require('../../services/configService');
+jest.mock('fs', () => ({
+  promises: {
+    readFile: jest.fn(),
+    writeFile: jest.fn()
+  }
+}));
+
+jest.mock('../../index', () => ({
+  logger: {
+    error: jest.fn(),
+    warn: jest.fn(),
+    info: jest.fn()
+  }
+}));
+
 const fs = require('fs');
 const path = require('path');
-
-jest.mock('fs', () => ({
-  readFileSync: jest.fn(),
-  writeFileSync: jest.fn()
-}));
+const configService = require('../../services/configService');
 
 describe('Config Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('getScoringWeights', () => {
-    it('should return scoring weights from config file', () => {
-      fs.readFileSync.mockReturnValue(JSON.stringify({
-        fundingStage: 0.3,
-        marketBuzz: 0.3,
-        strategicRelevance: 0.4
-      }));
+  describe('getScoringConfig', () => {
+    it('should return scoring config from file', async () => {
+      const mockConfig = {
+        weights: {
+          fundingStage: 0.3,
+          marketBuzz: 0.3,
+          strategicRelevance: 0.4
+        }
+      };
+      
+      fs.promises.readFile.mockResolvedValue(JSON.stringify(mockConfig));
 
-      const weights = configService.getScoringWeights();
+      const config = await configService.getScoringConfig();
 
-      expect(weights).toEqual({
-        fundingStage: 0.3,
-        marketBuzz: 0.3,
-        strategicRelevance: 0.4
-      });
-      expect(fs.readFileSync).toHaveBeenCalledWith(
+      expect(config).toEqual(mockConfig);
+      expect(fs.promises.readFile).toHaveBeenCalledWith(
         expect.stringContaining('scoring.json'),
         'utf8'
       );
     });
 
-    it('should return default weights if config file cannot be read', () => {
-      fs.readFileSync.mockImplementation(() => {
-        throw new Error('File not found');
-      });
+    it('should throw error if config file cannot be read', async () => {
+      const error = new Error('File not found');
+      fs.promises.readFile.mockRejectedValue(error);
 
-      const weights = configService.getScoringWeights();
-
-      expect(weights).toEqual({
-        fundingStage: 0.3,
-        marketBuzz: 0.3,
-        strategicRelevance: 0.4
-      });
+      await expect(configService.getScoringConfig()).rejects.toThrow('File not found');
+      const { logger } = require('../../index');
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Error reading scoring config'));
     });
   });
 
-  describe('updateScoringWeights', () => {
-    it('should update scoring weights in config file', () => {
+  describe('updateScoringConfig', () => {
+    it('should update scoring config in file', async () => {
+      const currentConfig = {
+        weights: {
+          fundingStage: 0.3,
+          marketBuzz: 0.3,
+          strategicRelevance: 0.4
+        }
+      };
+      
       const newWeights = {
         fundingStage: 0.25,
         marketBuzz: 0.35,
         strategicRelevance: 0.4
       };
+      
+      fs.promises.readFile.mockResolvedValue(JSON.stringify(currentConfig));
 
-      configService.updateScoringWeights(newWeights);
+      await configService.updateScoringConfig(newWeights);
 
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
+      const expectedConfig = {
+        weights: newWeights
+      };
+      
+      expect(fs.promises.writeFile).toHaveBeenCalledWith(
         expect.stringContaining('scoring.json'),
-        JSON.stringify(newWeights, null, 2),
+        JSON.stringify(expectedConfig, null, 2),
         'utf8'
       );
     });
 
-    it('should validate that weights sum to 1.0', () => {
+    it('should throw error if weights do not sum to 1', async () => {
+      const currentConfig = {
+        weights: {
+          fundingStage: 0.3,
+          marketBuzz: 0.3,
+          strategicRelevance: 0.4
+        }
+      };
+      
       const invalidWeights = {
         fundingStage: 0.2,
         marketBuzz: 0.2,
         strategicRelevance: 0.2
       };
+      
+      fs.promises.readFile.mockResolvedValue(JSON.stringify(currentConfig));
 
-      expect(() => {
-        configService.updateScoringWeights(invalidWeights);
-      }).toThrow('Weights must sum to 1.0');
-
-      expect(fs.writeFileSync).not.toHaveBeenCalled();
+      await expect(configService.updateScoringConfig(invalidWeights)).rejects.toThrow('Weights must sum to 1');
+      expect(fs.promises.writeFile).not.toHaveBeenCalled();
     });
   });
 
   describe('getDataSourceConfig', () => {
-    it('should return data source configuration from environment variables', () => {
-      process.env.ENABLE_CRUNCHBASE = 'true';
-      process.env.ENABLE_TECHCRUNCH = 'true';
-      process.env.ENABLE_LINKEDIN = 'false';
-      process.env.ENABLE_ANGELLIST = 'true';
-      process.env.ENABLE_NEWS = 'true';
+    it('should return data source config from file', async () => {
+      const mockConfig = {
+        sources: {
+          crunchbase: { enabled: true, weight: 1.0 },
+          techcrunch: { enabled: true, weight: 1.0 },
+          linkedin: { enabled: false, weight: 1.0 },
+          angellist: { enabled: true, weight: 1.0 },
+          news: { enabled: true, weight: 1.0 }
+        }
+      };
+      
+      fs.promises.readFile.mockResolvedValue(JSON.stringify(mockConfig));
 
-      const config = configService.getDataSourceConfig();
+      const config = await configService.getDataSourceConfig();
 
-      expect(config).toEqual({
-        crunchbase: true,
-        techcrunch: true,
-        linkedin: false,
-        angellist: true,
-        news: true
-      });
+      expect(config).toEqual(mockConfig);
+      expect(fs.promises.readFile).toHaveBeenCalledWith(
+        expect.stringContaining('datasources.json'),
+        'utf8'
+      );
     });
 
-    it('should return default values if environment variables are not set', () => {
-      delete process.env.ENABLE_CRUNCHBASE;
-      delete process.env.ENABLE_TECHCRUNCH;
-      delete process.env.ENABLE_LINKEDIN;
-      delete process.env.ENABLE_ANGELLIST;
-      delete process.env.ENABLE_NEWS;
+    it('should create default config if file does not exist', async () => {
+      const error = { code: 'ENOENT' };
+      fs.promises.readFile.mockRejectedValue(error);
 
-      const config = configService.getDataSourceConfig();
+      const config = await configService.getDataSourceConfig();
 
-      expect(config).toEqual({
-        crunchbase: true,
-        techcrunch: true,
-        linkedin: true,
-        angellist: true,
-        news: true
-      });
+      expect(config).toEqual(expect.objectContaining({
+        sources: expect.objectContaining({
+          crunchbase: expect.any(Object),
+          techcrunch: expect.any(Object),
+          linkedin: expect.any(Object),
+          angellist: expect.any(Object),
+          news: expect.any(Object)
+        })
+      }));
+      
+      expect(fs.promises.writeFile).toHaveBeenCalledWith(
+        expect.stringContaining('datasources.json'),
+        expect.any(String),
+        'utf8'
+      );
+    });
+  });
+
+  describe('updateDataSourceConfig', () => {
+    it('should update data source config in file', async () => {
+      const currentConfig = {
+        sources: {
+          crunchbase: { enabled: true, weight: 1.0 },
+          techcrunch: { enabled: true, weight: 1.0 },
+          linkedin: { enabled: true, weight: 1.0 },
+          angellist: { enabled: true, weight: 1.0 },
+          news: { enabled: true, weight: 1.0 }
+        }
+      };
+      
+      const newSources = {
+        crunchbase: { enabled: false, weight: 0.5 },
+        linkedin: { enabled: false, weight: 0.8 }
+      };
+      
+      fs.promises.readFile.mockResolvedValue(JSON.stringify(currentConfig));
+
+      await configService.updateDataSourceConfig(newSources);
+
+      const expectedConfig = {
+        sources: {
+          crunchbase: { enabled: false, weight: 0.5 },
+          techcrunch: { enabled: true, weight: 1.0 },
+          linkedin: { enabled: false, weight: 0.8 },
+          angellist: { enabled: true, weight: 1.0 },
+          news: { enabled: true, weight: 1.0 }
+        }
+      };
+      
+      expect(fs.promises.writeFile).toHaveBeenCalledWith(
+        expect.stringContaining('datasources.json'),
+        JSON.stringify(expectedConfig, null, 2),
+        'utf8'
+      );
     });
   });
 });

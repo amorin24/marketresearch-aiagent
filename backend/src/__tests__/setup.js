@@ -9,6 +9,16 @@ jest.mock('../index', () => ({
   }
 }));
 
+process.env.CREWAI_ENABLED = 'true';
+process.env.SQUIDAI_ENABLED = 'true';
+process.env.LETTAAI_ENABLED = 'true';
+process.env.AUTOGEN_ENABLED = 'true';
+process.env.LANGGRAPH_ENABLED = 'true';
+
+test('setup test environment', () => {
+  expect(process.env.NODE_ENV).toBe('test');
+});
+
 beforeAll(() => {
 });
 
