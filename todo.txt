@@ -4,5 +4,5 @@
 - [x] error handling
 - [x] Docker configuration
 - [x] UI performance
-- [ ] security practices
-- [ ] documentation gaps
+- [x] security practices
+- [x] documentation gaps
