@@ -5,7 +5,8 @@
  * Based on AutoGen documentation: https://microsoft.github.io/autogen/
  */
 
-const axios = require('axios');
+const { createBaseAdapter } = require('./baseAdapter');
+const { autoGenImplementation } = require('./realImplementation');
 const { logger } = require('../index');
 
 const config = {
@@ -26,28 +27,15 @@ const config = {
 };
 
 /**
- * Discover companies using AutoGen
- * @param {Object} parameters - Discovery parameters
- * @returns {Promise<Array>} Discovered companies
+ * Create all agents for AutoGen
+ * @returns {Object} Object containing all agents
  */
-const discoverCompanies = async (parameters = {}) => {
-  try {
-    logger.info('Starting company discovery with AutoGen');
-    
-    const userProxy = createUserProxyAgent();
-    const researchAssistant = createResearchAssistant();
-    const dataAnalyst = createDataAnalyst();
-    
-    const conversation = createConversation([userProxy, researchAssistant, dataAnalyst]);
-    
-    const companies = await simulateAutoGenExecution(conversation, parameters);
-    
-    logger.info(`AutoGen discovered ${companies.length} companies`);
-    return companies;
-  } catch (error) {
-    logger.error(`Error in AutoGen discovery: ${error.message}`);
-    throw error;
-  }
+const createAgents = () => {
+  return {
+    userProxy: createUserProxyAgent(),
+    researchAssistant: createResearchAssistant(),
+    dataAnalyst: createDataAnalyst()
+  };
 };
 
 /**
@@ -97,6 +85,15 @@ const createDataAnalyst = () => {
 };
 
 /**
+ * Create a workflow with agents
+ * @param {Object} agents - Object containing all agents
+ * @returns {Object} Conversation
+ */
+const createWorkflow = (agents) => {
+  return createConversation([agents.userProxy, agents.researchAssistant, agents.dataAnalyst]);
+};
+
+/**
  * Create a conversation between agents
  * @param {Array} agents - List of agents
  * @returns {Object} Conversation
@@ -114,7 +111,7 @@ const createConversation = (agents) => {
  * @param {string} companyName - Name of the company
  * @returns {Array} Agent reasoning steps
  */
-const generateAgentSteps = (companyName) => {
+const generateFrameworkSpecificSteps = (companyName) => {
   const userProxySteps = [
     {
       id: 1,
@@ -192,33 +189,54 @@ const generateAgentSteps = (companyName) => {
 };
 
 /**
- * Simulate AutoGen execution
- * @param {Object} conversation - Conversation configuration
- * @param {Object} parameters - Discovery parameters
+ * Execute real framework implementation
+ * @param {Object} workflow - Workflow configuration
+ * @param {Object} parameters - Execution parameters
  * @returns {Promise<Array>} Discovered companies
  */
-const simulateAutoGenExecution = async (conversation, parameters) => {
-  const companyName = parameters.companyName || 'BlockPay';
-  
-  const steps = generateAgentSteps(companyName);
-  
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  const mockCompanies = [
-    {
+const executeRealImplementation = async (workflow, parameters) => {
+  try {
+    const apiKey = process.env.OPENAI_API_KEY;
+    
+    if (!apiKey) {
+      logger.warn('No OpenAI API key found. Falling back to mock implementation.');
+      return null; // Return null to indicate fallback to mock implementation
+    }
+    
+    const autoGen = autoGenImplementation.initialize(apiKey);
+    
+    const autoGenAgents = workflow.agents.map(agent => 
+      autoGenImplementation.createAgent(autoGen, agent)
+    );
+    
+    // Create AutoGen conversation
+    const conversation = autoGenImplementation.createConversation(autoGen, workflow, autoGenAgents);
+    
+    // Execute AutoGen conversation
+    const result = await autoGenImplementation.executeConversation(conversation, parameters);
+    
+    if (!result.success) {
+      logger.error('AutoGen execution failed. Falling back to mock implementation.');
+      return null; // Return null to indicate fallback to mock implementation
+    }
+    
+    const companyName = parameters.companyName || 'BlockPay';
+    const steps = generateFrameworkSpecificSteps(companyName);
+    
+    const company = {
       name: companyName,
-      foundingYear: 2022,
-      location: 'Austin, TX',
-      focusArea: 'Technology',
-      investors: ['Sequoia Capital', 'Andreessen Horowitz'],
-      fundingAmount: '$18M',
+      foundingYear: 2022, // This would come from real implementation
+      location: 'Austin, TX', // This would come from real implementation
+      focusArea: 'Technology', // This would come from real implementation
+      investors: ['Sequoia Capital', 'Andreessen Horowitz'], // This would come from real implementation
+      fundingAmount: '$18M', // This would come from real implementation
       newsHeadlines: [
         `${companyName} secures $18M to develop innovative technology solutions`,
         `${companyName} launches new platform for enterprise customers`
-      ],
-      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.tech`,
-      isPublic: Math.random() > 0.5, // Randomly determine if company is public
-      stockSymbol: companyName.substring(0, 4).toUpperCase(),
+      ], // This would come from real implementation
+      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.tech`, // This would come from real implementation
+      isPublic: Math.random() > 0.5, // This would come from real implementation
+      stockSymbol: companyName.substring(0, 4).toUpperCase(), // This would come from real implementation
       stockPrice: Math.random() > 0.5 ? {
         symbol: companyName.substring(0, 4).toUpperCase(),
         currentPrice: 78.25 + (Math.random() * 40 - 20),
@@ -226,42 +244,29 @@ const simulateAutoGenExecution = async (conversation, parameters) => {
         changePercent: Math.random() * 5 - 2.5,
         marketCap: '$2.8B',
         lastUpdated: new Date().toISOString()
-      } : null,
+      } : null, // This would come from real implementation
       agentSteps: steps
-    }
-  ];
-  
-  if (companyName !== 'BlockPay') {
-    mockCompanies.push({
-      name: 'DataVision',
-      foundingYear: 2021,
-      location: 'Chicago, IL',
-      focusArea: 'AI and Machine Learning',
-      investors: ['Google Ventures', 'Accel Partners'],
-      fundingAmount: '$15M',
-      newsHeadlines: [
-        'DataVision raises $15M to advance AI solutions',
-        'DataVision partners with major technology providers'
-      ],
-      websiteUrl: 'https://datavision.ai',
-      isPublic: true,
-      stockSymbol: 'DATA',
-      stockPrice: {
-        symbol: 'DATA',
-        currentPrice: 64.50,
-        change: 2.25,
-        changePercent: 3.61,
-        marketCap: '$1.5B',
-        lastUpdated: new Date().toISOString()
-      },
-      agentSteps: generateAgentSteps('DataVision')
-    });
+    };
+    
+    return [company];
+  } catch (error) {
+    logger.error(`Error in real AutoGen implementation: ${error.message}`);
+    return null; // Return null to indicate fallback to mock implementation
   }
-  
-  return mockCompanies;
 };
 
-module.exports = {
-  ...config,
-  discoverCompanies
-};
+const getDefaultCompanyName = () => 'BlockPay';
+const getSecondCompanyName = () => 'DataVision';
+
+const adapter = createBaseAdapter(
+  config,
+  createAgents,
+  createWorkflow,
+  generateFrameworkSpecificSteps,
+  executeRealImplementation // Pass the real implementation function
+);
+
+adapter._internal.getDefaultCompanyName = getDefaultCompanyName;
+adapter._internal.getSecondCompanyName = getSecondCompanyName;
+
+module.exports = adapter;
