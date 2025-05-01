@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine as build
+FROM node:18.17.1-alpine as build
 
 # Set working directory
 WORKDIR /app
@@ -17,23 +17,17 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM nginx:alpine
+FROM nginx:1.25.3-alpine
 
 # Copy built files from the build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy custom nginx config to handle React Router
-COPY --from=build /app/dist /usr/share/nginx/html
+# Copy custom nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Create nginx config for React Router
-RUN echo 'server { \
-    listen 80; \
-    location / { \
-        root /usr/share/nginx/html; \
-        index index.html; \
-        try_files $uri $uri/ /index.html; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
+# Add health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:80/ || exit 1
 
 # Expose port 80
 EXPOSE 80
