@@ -31,6 +31,9 @@ describe('Framework Controller', () => {
     
     const frameworkController = require('../../controllers/frameworkController');
     app.use('/api/frameworks', frameworkController);
+    
+    const { globalErrorHandler } = require('../../utils/errorHandler');
+    app.use(globalErrorHandler);
   });
   
   describe('GET /', () => {
