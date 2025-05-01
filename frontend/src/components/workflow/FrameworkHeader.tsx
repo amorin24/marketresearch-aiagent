@@ -1,14 +1,14 @@
 import React from 'react';
 
 interface FrameworkHeaderProps {
-  frameworkName: string;
+  frameworkName: string; // Keeping for future use
   displayName: string;
-  status: string;
+  status?: string; // Used in getStatusBadge
   colorScheme: {
     secondary: string;
     accent: string;
   };
-  getStatusBadge: (status: string) => JSX.Element;
+  getStatusBadge: (_status: string) => React.ReactNode;
 }
 
 const FrameworkHeader: React.FC<FrameworkHeaderProps> = ({
@@ -25,7 +25,7 @@ const FrameworkHeader: React.FC<FrameworkHeaderProps> = ({
         </div>
         <h3 className="text-xl font-bold text-gray-800">{displayName}</h3>
       </div>
-      {getStatusBadge(status)}
+      {getStatusBadge(status || '')}
     </div>
   );
 };

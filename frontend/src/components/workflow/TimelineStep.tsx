@@ -6,8 +6,8 @@ interface TimelineStepProps {
   colorScheme: {
     accent: string;
   };
-  formatTimestamp: (timestamp: string | null) => string;
-  extractAgentInfo: (description: string) => { agentName: string | null; stepDescription: string };
+  formatTimestamp: (_timestamp: string | null) => string;
+  extractAgentInfo: (_description: string) => { agentName: string | null; stepDescription: string };
 }
 
 const TimelineStep: React.FC<TimelineStepProps> = ({
