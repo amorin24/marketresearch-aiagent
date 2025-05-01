@@ -62,7 +62,7 @@ const CompanyInput = () => {
             disabled={isResearching}
           />
         </div>
-        <p className="mt-2 text-sm text-gray-500">Enter the name of a fintech company you want to research</p>
+        <p className="mt-2 text-sm text-gray-500">Enter the name of any company you want to research</p>
       </div>
       
       <div className="mb-6">
