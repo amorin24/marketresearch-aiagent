@@ -244,9 +244,70 @@ The built frontend will be in the `frontend/dist/` directory.
 
 The platform can be deployed in various ways:
 
-- **Docker**: Use the provided Dockerfile to build a container
-- **Traditional Hosting**: Deploy the backend to a Node.js host and the frontend to a static file host
-- **Serverless**: The backend can be adapted to run as serverless functions
+### Docker Deployment
+
+The project includes Docker configuration for both development and production environments:
+
+#### Docker Configuration Files
+
+- `backend/Dockerfile`: Node.js configuration for the backend service
+- `frontend/Dockerfile`: Multi-stage build for the React frontend (build with Node.js, serve with Nginx)
+- `docker-compose.yml`: Orchestrates both services with proper networking
+
+#### Development with Docker
+
+For development using Docker:
+
+```bash
+# Start both services in development mode with hot-reloading
+docker-compose -f docker-compose.dev.yml up
+```
+
+This configuration mounts your local source code as volumes, enabling hot-reloading during development.
+
+#### Production Deployment with Docker
+
+For production deployment:
+
+```bash
+# Build and start production containers
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f
+```
+
+#### Docker Environment Configuration
+
+Environment variables can be configured in several ways:
+
+1. In the `.env` file for the backend service
+2. Through the `environment` section in `docker-compose.yml`
+3. Using Docker secrets for sensitive information in production
+
+#### Docker Image Customization
+
+To customize the Docker images:
+
+1. Modify the appropriate Dockerfile
+2. Update the build arguments in `docker-compose.yml` if needed
+3. Rebuild the containers with `docker-compose build`
+
+### Traditional Hosting
+
+Deploy the backend to a Node.js host and the frontend to a static file host:
+
+1. Build the frontend: `cd frontend && npm run build`
+2. Deploy the `frontend/dist` directory to a static file host
+3. Deploy the backend to a Node.js environment
+
+### Serverless
+
+The backend can be adapted to run as serverless functions:
+
+1. Refactor controllers into individual function handlers
+2. Update API routes to match serverless function endpoints
+3. Deploy to a serverless platform (AWS Lambda, Vercel, etc.)
 
 ## Contributing
 

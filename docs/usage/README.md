@@ -107,6 +107,86 @@ To export the discovered companies:
 - **Data Sources**: Enable only the data sources that are most relevant to your research to improve performance.
 - **Regular Updates**: Run the discovery process regularly to find new companies and updated information.
 
+## Using Docker
+
+If you're using the Docker deployment of the platform, here are some specific usage instructions:
+
+### Accessing the Platform
+
+- The frontend is available at `http://localhost` (port 80)
+- The backend API is available at `http://localhost:8000`
+
+### Managing Docker Containers
+
+To check the status of the running containers:
+
+```bash
+docker-compose ps
+```
+
+To view logs from the containers:
+
+```bash
+# View all logs
+docker-compose logs
+
+# View only frontend logs
+docker-compose logs frontend
+
+# View only backend logs
+docker-compose logs backend
+
+# Follow logs in real-time
+docker-compose logs -f
+```
+
+### Restarting Services
+
+If you need to restart a service:
+
+```bash
+# Restart the frontend
+docker-compose restart frontend
+
+# Restart the backend
+docker-compose restart backend
+
+# Restart all services
+docker-compose restart
+```
+
+### Updating Environment Variables
+
+If you need to update environment variables:
+
+1. Edit the `.env` file in the backend directory
+2. Restart the backend container:
+
+```bash
+docker-compose restart backend
+```
+
+### Stopping the Platform
+
+To stop the platform:
+
+```bash
+# Stop containers but don't remove them
+docker-compose stop
+
+# Stop and remove containers
+docker-compose down
+```
+
+### Troubleshooting Docker Usage
+
+If you encounter issues:
+
+- Check container logs for error messages
+- Verify that all required environment variables are set
+- Ensure ports 80 and 8000 are not in use by other applications
+- If the frontend can't connect to the backend, check network settings in docker-compose.yml
+
 ## Next Steps
 
 For information on extending the platform with new frameworks or data sources, see the [Development Guide](../development/README.md).
