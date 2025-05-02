@@ -260,8 +260,8 @@ const executeRealImplementation = async (workflow, parameters) => {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
     
-    if (!apiKey || apiKey === 'your_openai_api_key_here') {
-      logger.warn('No valid OpenAI API key found. Falling back to mock implementation.');
+    if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
+      logger.warn('No valid OpenAI API key found. OpenAI keys should start with sk-. Falling back to mock implementation.');
       return null; // Return null to indicate fallback to mock implementation
     }
     

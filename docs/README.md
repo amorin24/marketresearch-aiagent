@@ -46,9 +46,11 @@ To enable real implementations:
 
 1. Add your API keys to the `.env` file:
    ```
-   OPENAI_API_KEY=sk-your_actual_openai_api_key_here
-   ALPHA_VANTAGE_API_KEY=your_alpha_vantage_api_key_here
+   OPENAI_API_KEY=sk-your-openai-api-key-goes-here  # Must start with 'sk-'
+   ALPHA_VANTAGE_API_KEY=your-alpha-vantage-api-key-goes-here
    ```
+   
+   > **Important:** OpenAI API keys must start with the prefix `sk-`. If a valid API key is not provided, the system will automatically fall back to using mock data.
 
 2. Ensure the framework you want to use is enabled:
    ```

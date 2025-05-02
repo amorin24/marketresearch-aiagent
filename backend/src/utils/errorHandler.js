@@ -192,6 +192,21 @@ const validateRequest = (schema, property = 'body') => {
   };
 };
 
+/**
+ * Handle API key validation errors more descriptively
+ * @param {string} key - The API key to validate
+ * @param {string} service - The service name (e.g., 'OpenAI')
+ * @returns {string|null} - Error message if validation fails, null otherwise
+ */
+const validateApiKey = (key, service) => {
+  if (!key) return `No ${service} API key provided`;
+  if (key.includes('your') || key.includes('actual') || key.includes('goes-here')) 
+    return `Invalid ${service} API key: placeholder detected`;
+  if (service === 'OpenAI' && !key.startsWith('sk-')) 
+    return `Invalid OpenAI API key format: should start with 'sk-'`;
+  return null;
+};
+
 module.exports = {
   AppError,
   ValidationError,
@@ -203,5 +218,6 @@ module.exports = {
   asyncHandler,
   sanitizeErrorMessage,
   globalErrorHandler,
-  validateRequest
+  validateRequest,
+  validateApiKey
 };
