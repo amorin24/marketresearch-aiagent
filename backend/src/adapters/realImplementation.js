@@ -71,31 +71,36 @@ const crewAIImplementation = {
     
     try {
       const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
-        throw new Error('Valid OpenAI API key required for CrewAI. OpenAI keys should start with sk-');
-      }
       
       logger.info('Making API call to OpenAI for CrewAI implementation');
-      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: 'gpt-4',
-        messages: [
-          { 
-            role: 'system', 
-            content: `You are a financial research expert. Research ${parameters.companyName || 'the specified company'} and provide detailed information.` 
-          },
-          { 
-            role: 'user', 
-            content: `Find information about ${parameters.companyName || 'the specified company'} from credible sources. Include founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol. Format your response in a structured way that's easy to parse.` 
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 800
-      }, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
+      const { makeOpenAIRequest } = require('../utils/openaiApiUtil');
+      
+      const apiResult = await makeOpenAIRequest({
+        endpoint: '/v1/chat/completions',
+        data: {
+          model: 'gpt-4',
+          messages: [
+            { 
+              role: 'system', 
+              content: `You are a CrewAI agent team with three agents: Researcher, Analyst, and Scorer. Research ${parameters.companyName || 'the specified company'} and provide detailed information.` 
+            },
+            { 
+              role: 'user', 
+              content: `Execute a CrewAI workflow to research ${parameters.companyName || 'the specified company'}. Include founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol.` 
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 800
+        },
+        apiKey: apiKey,
+        frameworkName: 'CrewAI'
       });
+      
+      if (!apiResult.success) {
+        throw new Error(apiResult.error);
+      }
+      
+      const response = apiResult.response;
       
       const researchContent = response.data.choices[0].message.content;
       logger.info(`Received research content from OpenAI for ${parameters.companyName || 'the company'}`);
@@ -180,31 +185,36 @@ const autoGenImplementation = {
     
     try {
       const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
-        throw new Error('Valid OpenAI API key required for AutoGen. OpenAI keys should start with sk-');
-      }
       
       logger.info('Making API call to OpenAI for AutoGen implementation');
-      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: 'gpt-4',
-        messages: [
-          { 
-            role: 'system', 
-            content: `You are a team of AI agents collaborating to research ${parameters.companyName || 'the specified company'}. Agent 1 is the user proxy, Agent 2 is the researcher, and Agent 3 is the analyst.` 
-          },
-          { 
-            role: 'user', 
-            content: `Research ${parameters.companyName || 'the specified company'} and provide detailed information including founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol. Format your response as a conversation between the three agents.` 
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 800
-      }, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
+      const { makeOpenAIRequest } = require('../utils/openaiApiUtil');
+      
+      const apiResult = await makeOpenAIRequest({
+        endpoint: '/v1/chat/completions',
+        data: {
+          model: 'gpt-4',
+          messages: [
+            { 
+              role: 'system', 
+              content: `You are an AutoGen multi-agent system with DataAgent and AnalystAgent. Research ${parameters.companyName || 'the specified company'} and provide detailed information.` 
+            },
+            { 
+              role: 'user', 
+              content: `Execute an AutoGen workflow to research ${parameters.companyName || 'the specified company'}. Include founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol.` 
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 800
+        },
+        apiKey: apiKey,
+        frameworkName: 'AutoGen'
       });
+      
+      if (!apiResult.success) {
+        throw new Error(apiResult.error);
+      }
+      
+      const response = apiResult.response;
       
       const researchContent = response.data.choices[0].message.content;
       logger.info(`Received research content from OpenAI for ${parameters.companyName || 'the company'}`);
@@ -304,36 +314,38 @@ const langGraphImplementation = {
     
     try {
       const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
-        throw new Error('Valid OpenAI API key required for LangGraph. OpenAI keys should start with sk-');
-      }
       
       logger.info('Making API call to OpenAI for LangGraph implementation');
-      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: 'gpt-4',
-        messages: [
-          { 
-            role: 'system', 
-            content: `You are a LangGraph workflow with three nodes: Research, Extraction, and Analysis. Research ${parameters.companyName || 'the specified company'} and provide detailed information.` 
-          },
-          { 
-            role: 'user', 
-            content: `Execute a LangGraph workflow to research ${parameters.companyName || 'the specified company'}. 
-            1. Research Node: Find information about the company from credible sources.
-            2. Extraction Node: Extract founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol.
-            3. Analysis Node: Analyze the company's market position and relevance.
-            
-            Format your response as a structured workflow with outputs from each node.` 
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 800
-      }, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
+      const { makeOpenAIRequest } = require('../utils/openaiApiUtil');
+      
+      const apiResult = await makeOpenAIRequest({
+        endpoint: '/v1/chat/completions',
+        data: {
+          model: 'gpt-4',
+          messages: [
+            { 
+              role: 'system', 
+              content: `You are a LangGraph/LangChain agent with multiple nodes: DataRetrieval, Analysis, and Scoring. Research ${parameters.companyName || 'the specified company'} and provide detailed information.` 
+            },
+            { 
+              role: 'user', 
+              content: `Execute a LangGraph workflow to research ${parameters.companyName || 'the specified company'}. Include founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol.
+              
+              Format your response as if it came from a graph workflow with node outputs.` 
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 800
+        },
+        apiKey: apiKey,
+        frameworkName: 'LangGraph'
       });
+      
+      if (!apiResult.success) {
+        throw new Error(apiResult.error);
+      }
+      
+      const response = apiResult.response;
       
       const researchContent = response.data.choices[0].message.content;
       logger.info(`Received research content from OpenAI for ${parameters.companyName || 'the company'}`);
@@ -427,36 +439,38 @@ const squidAIImplementation = {
     
     try {
       const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
-        throw new Error('Valid OpenAI API key required for SquidAI. OpenAI keys should start with sk-');
-      }
       
       logger.info('Making API call to OpenAI for SquidAI implementation');
-      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: 'gpt-4',
-        messages: [
-          { 
-            role: 'system', 
-            content: `You are a SquidAI network with three specialized agents: Information Gatherer, Data Processor, and Analyst. Research ${parameters.companyName || 'the specified company'} and provide detailed information.` 
-          },
-          { 
-            role: 'user', 
-            content: `Execute a SquidAI network to research ${parameters.companyName || 'the specified company'}. 
-            1. Information Gatherer: Find information about the company from credible sources.
-            2. Data Processor: Extract founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol.
-            3. Analyst: Analyze the company's market position and relevance.
-            
-            Format your response as a structured network with outputs from each agent.` 
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 800
-      }, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
+      const { makeOpenAIRequest } = require('../utils/openaiApiUtil');
+      
+      const apiResult = await makeOpenAIRequest({
+        endpoint: '/v1/chat/completions',
+        data: {
+          model: 'gpt-4',
+          messages: [
+            { 
+              role: 'system', 
+              content: `You are a SquidAI agent system with three tentacles: DataGatherer, Analyzer, and Reporter. Research ${parameters.companyName || 'the specified company'} and provide detailed information.` 
+            },
+            { 
+              role: 'user', 
+              content: `Execute a SquidAI workflow to research ${parameters.companyName || 'the specified company'}. Include founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol.
+              
+              Format your response as a structured output with sections for each tentacle.` 
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 800
+        },
+        apiKey: apiKey,
+        frameworkName: 'SquidAI'
       });
+      
+      if (!apiResult.success) {
+        throw new Error(apiResult.error);
+      }
+      
+      const response = apiResult.response;
       
       const researchContent = response.data.choices[0].message.content;
       logger.info(`Received research content from OpenAI for ${parameters.companyName || 'the company'}`);
@@ -551,36 +565,38 @@ const lettaAIImplementation = {
     
     try {
       const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
-        throw new Error('Valid OpenAI API key required for LettaAI. OpenAI keys should start with sk-');
-      }
       
       logger.info('Making API call to OpenAI for LettaAI implementation');
-      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: 'gpt-4',
-        messages: [
-          { 
-            role: 'system', 
-            content: `You are a LettaAI hierarchical agent system with three agents: Coordinator, Data Collector, and Analyzer. Research ${parameters.companyName || 'the specified company'} and provide detailed information.` 
-          },
-          { 
-            role: 'user', 
-            content: `Execute a LettaAI hierarchical workflow to research ${parameters.companyName || 'the specified company'}. 
-            1. Coordinator: Oversee the research process and coordinate between agents.
-            2. Data Collector: Collect information about the company including founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol.
-            3. Analyzer: Analyze the company's market position, relevance, and provide insights.
-            
-            Format your response as a structured hierarchy with outputs from each agent role.` 
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 800
-      }, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
+      const { makeOpenAIRequest } = require('../utils/openaiApiUtil');
+      
+      const apiResult = await makeOpenAIRequest({
+        endpoint: '/v1/chat/completions',
+        data: {
+          model: 'gpt-4',
+          messages: [
+            { 
+              role: 'system', 
+              content: `You are a LettaAI hierarchical agent system with three agents: Coordinator, Data Collector, and Analyzer. Research ${parameters.companyName || 'the specified company'} and provide detailed information.` 
+            },
+            { 
+              role: 'user', 
+              content: `Execute a LettaAI hierarchical workflow to research ${parameters.companyName || 'the specified company'}. Include founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol.
+              
+              Format your response as a structured hierarchy with outputs from each agent role.` 
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 800
+        },
+        apiKey: apiKey,
+        frameworkName: 'LettaAI'
       });
+      
+      if (!apiResult.success) {
+        throw new Error(apiResult.error);
+      }
+      
+      const response = apiResult.response;
       
       const researchContent = response.data.choices[0].message.content;
       logger.info(`Received research content from OpenAI for ${parameters.companyName || 'the company'}`);

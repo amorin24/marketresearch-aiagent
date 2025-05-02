@@ -52,7 +52,14 @@ To enable real implementations:
    
    > **Important:** OpenAI API keys must start with the prefix `sk-`. If a valid API key is not provided, the system will automatically fall back to using mock data.
 
-2. Ensure the framework you want to use is enabled:
+2. Configure OpenAI API retry behavior for rate limiting (429 errors):
+   ```
+   OPENAI_MAX_RETRIES=3
+   OPENAI_INITIAL_RETRY_DELAY=1000
+   ```
+   The system automatically implements exponential backoff for retries when rate limit errors occur.
+
+3. Ensure the framework you want to use is enabled:
    ```
    CREWAI_ENABLED=true
    SQUIDAI_ENABLED=true
@@ -61,7 +68,7 @@ To enable real implementations:
    LANGGRAPH_ENABLED=true
    ```
 
-3. For email notifications, configure the email settings:
+4. For email notifications, configure the email settings:
    ```
    EMAIL_SERVICE=smtp
    EMAIL_HOST=smtp.example.com
