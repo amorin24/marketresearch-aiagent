@@ -1,63 +1,54 @@
 const express = require('express');
 const router = express.Router();
 const companyService = require('../services/companyService');
-const { logger } = require('../index');
+const { 
+  asyncHandler, 
+  NotFoundError, 
+  ValidationError 
+} = require('../utils/errorHandler');
+const companyValidation = require('../middleware/validation/companyValidation');
+const { validateRequest } = require('../middleware/security/inputValidation');
 
-router.get('/', async (req, res) => {
-  try {
-    const companies = await companyService.getAllCompanies();
-    res.json(companies);
-  } catch (error) {
-    logger.error(`Error fetching companies: ${error.message}`);
-    res.status(500).json({ error: 'Failed to fetch companies' });
+router.get('/', asyncHandler(async (req, res) => {
+  const companies = await companyService.getAllCompanies();
+  res.json(companies);
+}));
+
+router.get('/:id', asyncHandler(async (req, res) => {
+  const company = await companyService.getCompanyById(req.params.id);
+  if (!company) {
+    throw new NotFoundError('Company not found');
   }
-});
+  res.json(company);
+}));
 
-router.get('/:id', async (req, res) => {
-  try {
-    const company = await companyService.getCompanyById(req.params.id);
-    if (!company) {
-      return res.status(404).json({ error: 'Company not found' });
-    }
-    res.json(company);
-  } catch (error) {
-    logger.error(`Error fetching company ${req.params.id}: ${error.message}`);
-    res.status(500).json({ error: 'Failed to fetch company' });
-  }
-});
-
-router.post('/discover', async (req, res) => {
-  try {
+router.post('/discover', 
+  companyValidation.discover,
+  validateRequest(),
+  asyncHandler(async (req, res) => {
     const { framework, parameters } = req.body;
-    if (!framework) {
-      return res.status(400).json({ error: 'Framework must be specified' });
-    }
-    
     const jobId = await companyService.startDiscovery(framework, parameters);
     res.json({ jobId, status: 'discovery_started' });
-  } catch (error) {
-    logger.error(`Error starting discovery: ${error.message}`);
-    res.status(500).json({ error: 'Failed to start discovery' });
-  }
-});
+  })
+);
 
-router.get('/discover/:jobId', async (req, res) => {
-  try {
+router.get('/discover/:jobId', 
+  companyValidation.getDiscoveryStatus,
+  validateRequest(),
+  asyncHandler(async (req, res) => {
     const status = await companyService.getDiscoveryStatus(req.params.jobId);
-    res.json(status);
-  } catch (error) {
-    logger.error(`Error fetching discovery status: ${error.message}`);
-    res.status(500).json({ error: 'Failed to fetch discovery status' });
-  }
-});
-
-router.get('/export/:format', async (req, res) => {
-  try {
-    const format = req.params.format.toLowerCase();
-    if (!['json', 'csv'].includes(format)) {
-      return res.status(400).json({ error: 'Format must be either JSON or CSV' });
+    if (!status) {
+      throw new NotFoundError('Discovery job not found');
     }
-    
+    res.json(status);
+  })
+);
+
+router.get('/export/:format', 
+  companyValidation.exportCompanies,
+  validateRequest(),
+  asyncHandler(async (req, res) => {
+    const format = req.params.format.toLowerCase();
     const data = await companyService.exportCompanies(format);
     
     if (format === 'json') {
@@ -67,39 +58,29 @@ router.get('/export/:format', async (req, res) => {
       res.setHeader('Content-Disposition', 'attachment; filename=companies.csv');
       res.send(data);
     }
-  } catch (error) {
-    logger.error(`Error exporting companies: ${error.message}`);
-    res.status(500).json({ error: 'Failed to export companies' });
-  }
-});
+  })
+);
 
-router.post('/research-company', async (req, res) => {
-  try {
+router.post('/research-company', 
+  companyValidation.researchCompany,
+  validateRequest(),
+  asyncHandler(async (req, res) => {
     const { companyName, frameworks, email } = req.body;
-    if (!companyName) {
-      return res.status(400).json({ error: 'Company name must be specified' });
-    }
-    
-    if (!frameworks || !Array.isArray(frameworks) || frameworks.length === 0) {
-      return res.status(400).json({ error: 'At least one framework must be specified' });
-    }
-    
     const jobId = await companyService.startCompanyResearch(companyName, frameworks, email);
     res.json({ jobId, status: 'research_started' });
-  } catch (error) {
-    logger.error(`Error starting company research: ${error.message}`);
-    res.status(500).json({ error: 'Failed to start company research' });
-  }
-});
+  })
+);
 
-router.get('/research-company/:jobId', async (req, res) => {
-  try {
+router.get('/research-company/:jobId', 
+  companyValidation.getResearchStatus,
+  validateRequest(),
+  asyncHandler(async (req, res) => {
     const status = await companyService.getCompanyResearchStatus(req.params.jobId);
+    if (!status) {
+      throw new NotFoundError('Research job not found');
+    }
     res.json(status);
-  } catch (error) {
-    logger.error(`Error fetching company research status: ${error.message}`);
-    res.status(500).json({ error: 'Failed to fetch company research status' });
-  }
-});
+  })
+);
 
 module.exports = router;

@@ -3,13 +3,13 @@ import { Framework, Company } from '../types';
 
 interface FrameworkContextType {
   currentFramework: string;
-  setCurrentFramework: (framework: string) => void;
+  setCurrentFramework: (_frameworkName: string) => void;
   frameworks: Framework[];
   companies: Company[];
   isLoading: boolean;
   error: string | null;
-  loadCompanies: (framework: string) => Promise<void>;
-  switchFramework: (framework: string) => Promise<void>;
+  loadCompanies: (_frameworkName: string) => Promise<void>;
+  switchFramework: (_frameworkName: string) => Promise<void>;
 }
 
 const FrameworkContext = createContext<FrameworkContextType | undefined>(undefined);
@@ -51,7 +51,7 @@ export const FrameworkProvider = ({ children }: FrameworkProviderProps) => {
     fetchFrameworks();
   }, []);
 
-  const loadCompanies = async (framework: string) => {
+  const loadCompanies = async (frameworkName: string) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -61,7 +61,7 @@ export const FrameworkProvider = ({ children }: FrameworkProviderProps) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ framework }),
+        body: JSON.stringify({ framework: frameworkName }),
       });
       
       const { jobId } = await response.json();
@@ -92,9 +92,9 @@ export const FrameworkProvider = ({ children }: FrameworkProviderProps) => {
     }
   };
 
-  const switchFramework = async (framework: string) => {
-    setCurrentFramework(framework);
-    await loadCompanies(framework);
+  const switchFramework = async (frameworkName: string) => {
+    setCurrentFramework(frameworkName);
+    await loadCompanies(frameworkName);
   };
 
   const value = {

@@ -9,6 +9,15 @@ module.exports = [
       sourceType: 'commonjs',
       globals: {
         ...globals.node,
+        ...globals.jest,
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        beforeAll: 'readonly',
+        afterEach: 'readonly',
+        afterAll: 'readonly',
       }
     },
     rules: {

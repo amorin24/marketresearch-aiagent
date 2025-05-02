@@ -3,6 +3,12 @@ const frameworkService = require('./frameworkService');
 const emailService = require('./emailService');
 const stockPriceService = require('./stockPriceService');
 const { logger } = require('../index');
+const { 
+  NotFoundError, 
+  ValidationError, 
+  ServiceUnavailableError,
+  ExternalServiceError
+} = require('../utils/errorHandler');
 
 const companies = [];
 const discoveryJobs = new Map();
@@ -33,7 +39,7 @@ const getCompanyById = async (id) => {
 const startDiscovery = async (frameworkName, parameters = {}) => {
   const framework = await frameworkService.getFrameworkAdapter(frameworkName);
   if (!framework) {
-    throw new Error(`Framework ${frameworkName} not found or not enabled`);
+    throw new NotFoundError(`Framework ${frameworkName} not found or not enabled`);
   }
   
   const jobId = uuidv4();
@@ -208,7 +214,7 @@ const exportCompanies = async (format) => {
     
     return headers + rows;
   } else {
-    throw new Error(`Unsupported export format: ${format}`);
+    throw new ValidationError(`Unsupported export format: ${format}`);
   }
 };
 
@@ -254,7 +260,7 @@ const startCompanyResearch = async (companyName, frameworkNames, email = null) =
       try {
         const framework = await frameworkService.getFrameworkAdapter(frameworkName);
         if (!framework) {
-          throw new Error(`Framework ${frameworkName} not found or not enabled`);
+          throw new NotFoundError(`Framework ${frameworkName} not found or not enabled`);
         }
         
         let jobData = discoveryJobs.get(jobId);

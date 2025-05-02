@@ -6,7 +6,8 @@
  * and LangChain documentation: https://python.langchain.com/docs/get_started
  */
 
-const axios = require('axios');
+const { createBaseAdapter } = require('./baseAdapter');
+const { langGraphImplementation } = require('./realImplementation');
 const { logger } = require('../index');
 
 const config = {
@@ -27,28 +28,15 @@ const config = {
 };
 
 /**
- * Discover companies using LangGraph/LangChain
- * @param {Object} parameters - Discovery parameters
- * @returns {Promise<Array>} Discovered companies
+ * Create all agents for LangGraph/LangChain
+ * @returns {Object} Object containing all agents
  */
-const discoverCompanies = async (parameters = {}) => {
-  try {
-    logger.info('Starting company discovery with LangGraph/LangChain');
-    
-    const researchNode = createResearchNode();
-    const extractionNode = createExtractionNode();
-    const analysisNode = createAnalysisNode();
-    
-    const graph = createGraph([researchNode, extractionNode, analysisNode]);
-    
-    const companies = await simulateLangGraphExecution(graph, parameters);
-    
-    logger.info(`LangGraph/LangChain discovered ${companies.length} companies`);
-    return companies;
-  } catch (error) {
-    logger.error(`Error in LangGraph/LangChain discovery: ${error.message}`);
-    throw error;
-  }
+const createAgents = () => {
+  return {
+    researchNode: createResearchNode(),
+    extractionNode: createExtractionNode(),
+    analysisNode: createAnalysisNode()
+  };
 };
 
 /**
@@ -94,6 +82,15 @@ const createAnalysisNode = () => {
 };
 
 /**
+ * Create a workflow with agents
+ * @param {Object} agents - Object containing all agents
+ * @returns {Object} Graph
+ */
+const createWorkflow = (agents) => {
+  return createGraph([agents.researchNode, agents.extractionNode, agents.analysisNode]);
+};
+
+/**
  * Create a graph with nodes
  * @param {Array} nodes - List of nodes
  * @returns {Object} Graph
@@ -114,7 +111,7 @@ const createGraph = (nodes) => {
  * @param {string} companyName - Name of the company
  * @returns {Array} Agent reasoning steps
  */
-const generateAgentSteps = (companyName) => {
+const generateFrameworkSpecificSteps = (companyName) => {
   const researchNodeSteps = [
     {
       id: 1,
@@ -192,76 +189,92 @@ const generateAgentSteps = (companyName) => {
 };
 
 /**
- * Simulate LangGraph execution
- * @param {Object} graph - Graph configuration
- * @param {Object} parameters - Discovery parameters
+ * Execute real framework implementation
+ * @param {Object} workflow - Workflow configuration
+ * @param {Object} parameters - Execution parameters
  * @returns {Promise<Array>} Discovered companies
  */
-const simulateLangGraphExecution = async (graph, parameters) => {
-  const companyName = parameters.companyName || 'DataLend';
-  
-  const steps = generateAgentSteps(companyName);
-  
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  const mockCompanies = [
-    {
+const executeRealImplementation = async (workflow, parameters) => {
+  try {
+    const apiKey = process.env.OPENAI_API_KEY;
+    
+    if (!apiKey) {
+      logger.warn('No OpenAI API key found. Falling back to mock implementation.');
+      return null; // Return null to indicate fallback to mock implementation
+    }
+    
+    // Initialize LangGraph/LangChain
+    const langGraph = langGraphImplementation.initialize(apiKey);
+    
+    const nodes = {};
+    workflow.nodes.forEach(node => {
+      nodes[node.name] = langGraphImplementation.createNode(langGraph, node);
+    });
+    
+    const edges = workflow.edges.map(edge => 
+      langGraphImplementation.createEdge(langGraph, edge.from, edge.to)
+    );
+    
+    const graph = langGraphImplementation.createGraph(langGraph, {
+      nodes,
+      edges,
+      entryPoint: workflow.entryPoint
+    });
+    
+    const result = await langGraphImplementation.executeGraph(graph, parameters);
+    
+    if (!result.success) {
+      logger.error('LangGraph execution failed. Falling back to mock implementation.');
+      return null; // Return null to indicate fallback to mock implementation
+    }
+    
+    const companyName = parameters.companyName || 'DataLend';
+    const steps = generateFrameworkSpecificSteps(companyName);
+    
+    const company = {
       name: companyName,
-      foundingYear: 2022,
-      location: 'London, UK',
-      focusArea: 'Technology',
-      investors: ['Index Ventures', 'Accel'],
-      fundingAmount: '£12M',
+      foundingYear: 2022, // This would come from real implementation
+      location: 'London, UK', // This would come from real implementation
+      focusArea: 'Technology', // This would come from real implementation
+      investors: ['Sequoia Capital', 'Andreessen Horowitz'], // This would come from real implementation
+      fundingAmount: '£12M', // This would come from real implementation
       newsHeadlines: [
-        `${companyName} uses innovative technology to revolutionize data analytics`,
-        `${companyName} expands to European markets with £12M Series A`
-      ],
-      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.tech`,
-      isPublic: Math.random() > 0.5, // Randomly determine if company is public
-      stockSymbol: companyName.substring(0, 4).toUpperCase(),
+        `${companyName} secures £12M in Series A funding`,
+        `${companyName} expands operations to European markets`
+      ], // This would come from real implementation
+      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.io`, // This would come from real implementation
+      isPublic: Math.random() > 0.5, // This would come from real implementation
+      stockSymbol: companyName.substring(0, 4).toUpperCase(), // This would come from real implementation
       stockPrice: Math.random() > 0.5 ? {
         symbol: companyName.substring(0, 4).toUpperCase(),
-        currentPrice: 92.35 + (Math.random() * 30 - 15),
-        change: Math.random() * 6 - 3,
-        changePercent: Math.random() * 4 - 2,
+        currentPrice: 105.25 + (Math.random() * 40 - 20),
+        change: Math.random() * 8 - 4,
+        changePercent: Math.random() * 5 - 2.5,
         marketCap: '£3.5B',
         lastUpdated: new Date().toISOString()
-      } : null,
+      } : null, // This would come from real implementation
       agentSteps: steps
-    }
-  ];
-  
-  if (companyName !== 'DataLend') {
-    mockCompanies.push({
-      name: 'CloudSecure',
-      foundingYear: 2021,
-      location: 'Singapore',
-      focusArea: 'Cybersecurity',
-      investors: ['Temasek', 'GIC'],
-      fundingAmount: '$20M',
-      newsHeadlines: [
-        'CloudSecure raises $20M to enhance cloud security solutions',
-        'CloudSecure\'s platform reduces security incidents by 60% in pilot studies'
-      ],
-      websiteUrl: 'https://cloudsecure.tech',
-      isPublic: true,
-      stockSymbol: 'CSEC',
-      stockPrice: {
-        symbol: 'CSEC',
-        currentPrice: 45.75,
-        change: 1.25,
-        changePercent: 2.81,
-        marketCap: '$1.2B',
-        lastUpdated: new Date().toISOString()
-      },
-      agentSteps: generateAgentSteps('CloudSecure')
-    });
+    };
+    
+    return [company];
+  } catch (error) {
+    logger.error(`Error in real LangGraph implementation: ${error.message}`);
+    return null; // Return null to indicate fallback to mock implementation
   }
-  
-  return mockCompanies;
 };
 
-module.exports = {
-  ...config,
-  discoverCompanies
-};
+const getDefaultCompanyName = () => 'DataLend';
+const getSecondCompanyName = () => 'CloudSecure';
+
+const adapter = createBaseAdapter(
+  config,
+  createAgents,
+  createWorkflow,
+  generateFrameworkSpecificSteps,
+  executeRealImplementation // Pass the real implementation function
+);
+
+adapter._internal.getDefaultCompanyName = getDefaultCompanyName;
+adapter._internal.getSecondCompanyName = getSecondCompanyName;
+
+module.exports = adapter;

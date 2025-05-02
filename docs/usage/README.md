@@ -47,7 +47,19 @@ To view detailed information about a discovered company:
    - Funding information
    - Investors
    - News headlines
+   - Stock price and symbol (for public companies)
    - Score breakdown
+
+## Researching Specific Companies
+
+To research a specific company across multiple frameworks:
+
+1. Navigate to the "Company Research" page using the navigation menu
+2. Enter the company name in the search field
+3. Select the frameworks you want to use for the research
+4. Optionally enter your email address to receive a notification when the research is complete
+5. Click the "Start Research" button
+6. View the research progress and results for each framework
 
 ## Comparing Frameworks
 

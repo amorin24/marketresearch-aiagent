@@ -3,11 +3,11 @@ import { Framework, ResearchJob } from '../types';
 
 interface CompanyResearchContextType {
   companyName: string;
-  setCompanyName: (name: string) => void;
+  setCompanyName: (_name: string) => void;
   userEmail: string;
-  setUserEmail: (email: string) => void;
+  setUserEmail: (_email: string) => void;
   selectedFrameworks: string[];
-  toggleFramework: (framework: string) => void;
+  toggleFramework: (_frameworkName: string) => void;
   selectAllFrameworks: () => void;
   deselectAllFrameworks: () => void;
   isResearching: boolean;
@@ -72,16 +72,16 @@ export const CompanyResearchProvider = ({ children }: CompanyResearchProviderPro
     };
   }, [pollInterval]);
 
-  const toggleFramework = (framework: string) => {
-    console.log('Toggling framework:', framework);
+  const toggleFramework = (frameworkName: string) => {
+    console.log('Toggling framework:', frameworkName);
     setSelectedFrameworks(prev => {
       console.log('Previous selectedFrameworks:', prev);
-      if (prev.includes(framework)) {
-        const newFrameworks = prev.filter(f => f !== framework);
+      if (prev.includes(frameworkName)) {
+        const newFrameworks = prev.filter(f => f !== frameworkName);
         console.log('New selectedFrameworks (after removal):', newFrameworks);
         return newFrameworks;
       } else {
-        const newFrameworks = [...prev, framework];
+        const newFrameworks = [...prev, frameworkName];
         console.log('New selectedFrameworks (after addition):', newFrameworks);
         return newFrameworks;
       }
@@ -173,6 +173,8 @@ export const CompanyResearchProvider = ({ children }: CompanyResearchProviderPro
   const value = {
     companyName,
     setCompanyName,
+    userEmail,
+    setUserEmail,
     selectedFrameworks,
     toggleFramework,
     selectAllFrameworks,

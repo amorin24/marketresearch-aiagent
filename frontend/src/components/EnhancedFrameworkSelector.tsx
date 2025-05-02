@@ -3,7 +3,7 @@ import { Framework } from '../types';
 interface EnhancedFrameworkSelectorProps {
   frameworks: Framework[];
   selectedFrameworks: string[];
-  onToggleFramework: (framework: string) => void;
+  onToggleFramework: (_frameworkName: string) => void;
 }
 
 const EnhancedFrameworkSelector = ({ frameworks, selectedFrameworks, onToggleFramework }: EnhancedFrameworkSelectorProps) => {

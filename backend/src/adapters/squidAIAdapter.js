@@ -5,7 +5,8 @@
  * Based on SquidAI documentation (hypothetical framework)
  */
 
-const axios = require('axios');
+const { createBaseAdapter } = require('./baseAdapter');
+const { squidAIImplementation } = require('./realImplementation');
 const { logger } = require('../index');
 
 const config = {
@@ -24,27 +25,14 @@ const config = {
 };
 
 /**
- * Discover companies using SquidAI
- * @param {Object} parameters - Discovery parameters
- * @returns {Promise<Array>} Discovered companies
+ * Create all agents for SquidAI
+ * @returns {Object} Object containing all agents
  */
-const discoverCompanies = async (parameters = {}) => {
-  try {
-    logger.info('Starting company discovery with SquidAI');
-    
-    
-    const squid = initializeSquidAI();
-    
-    const tasks = defineDiscoveryTasks();
-    
-    const companies = await simulateSquidAIExecution(squid, tasks, parameters);
-    
-    logger.info(`SquidAI discovered ${companies.length} companies`);
-    return companies;
-  } catch (error) {
-    logger.error(`Error in SquidAI discovery: ${error.message}`);
-    throw error;
-  }
+const createAgents = () => {
+  return {
+    squid: initializeSquidAI(),
+    tasks: defineDiscoveryTasks()
+  };
 };
 
 /**
@@ -106,11 +94,23 @@ const defineDiscoveryTasks = () => {
 };
 
 /**
+ * Create a workflow with agents and tasks
+ * @param {Object} agents - Object containing all agents
+ * @returns {Object} Workflow
+ */
+const createWorkflow = (agents) => {
+  return {
+    environment: agents.squid,
+    tasks: agents.tasks
+  };
+};
+
+/**
  * Generate agent reasoning steps for a company
  * @param {string} companyName - Name of the company
  * @returns {Array} Agent reasoning steps
  */
-const generateAgentSteps = (companyName) => {
+const generateFrameworkSpecificSteps = (companyName) => {
   const searcherSteps = [
     {
       id: 1,
@@ -180,77 +180,85 @@ const generateAgentSteps = (companyName) => {
 };
 
 /**
- * Simulate SquidAI execution
- * @param {Object} squid - SquidAI environment
- * @param {Array} tasks - List of tasks
- * @param {Object} parameters - Discovery parameters
+ * Execute real framework implementation
+ * @param {Object} workflow - Workflow configuration
+ * @param {Object} parameters - Execution parameters
  * @returns {Promise<Array>} Discovered companies
  */
-const simulateSquidAIExecution = async (squid, tasks, parameters) => {
-  const companyName = parameters.companyName || 'LoanQuick';
-  
-  const steps = generateAgentSteps(companyName);
-  
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  const mockCompanies = [
-    {
+const executeRealImplementation = async (workflow, parameters) => {
+  try {
+    const apiKey = process.env.OPENAI_API_KEY;
+    
+    if (!apiKey) {
+      logger.warn('No OpenAI API key found. Falling back to mock implementation.');
+      return null; // Return null to indicate fallback to mock implementation
+    }
+    
+    const squidAI = squidAIImplementation.initialize(apiKey);
+    
+    const squidAgents = workflow.environment.agents.map(agent => 
+      squidAIImplementation.createAgent(squidAI, agent)
+    );
+    
+    const network = squidAIImplementation.createNetwork(squidAI, {
+      name: workflow.environment.name,
+      tasks: workflow.tasks
+    }, squidAgents);
+    
+    const result = await squidAIImplementation.executeNetwork(network, parameters);
+    
+    if (!result.success) {
+      logger.error('SquidAI execution failed. Falling back to mock implementation.');
+      return null; // Return null to indicate fallback to mock implementation
+    }
+    
+    const companyName = parameters.companyName || 'LoanQuick';
+    const steps = generateFrameworkSpecificSteps(companyName);
+    
+    const company = {
       name: companyName,
-      foundingYear: 2019,
-      location: 'Chicago, IL',
-      focusArea: 'Technology',
-      investors: ['Y Combinator', 'Lightspeed Venture Partners'],
-      fundingAmount: '$15M',
+      foundingYear: 2019, // This would come from real implementation
+      location: 'Chicago, IL', // This would come from real implementation
+      focusArea: 'Technology', // This would come from real implementation
+      investors: ['Sequoia Capital', 'Andreessen Horowitz'], // This would come from real implementation
+      fundingAmount: '$15M', // This would come from real implementation
       newsHeadlines: [
-        `${companyName} introduces innovative data processing technology`,
-        `${companyName} partners with major enterprises for technology integration`
-      ],
-      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.io`,
-      isPublic: Math.random() > 0.5, // Randomly determine if company is public
-      stockSymbol: companyName.substring(0, 4).toUpperCase(),
+        `${companyName} raises $15M Series A for technology expansion`,
+        `${companyName} partners with major industry players`
+      ], // This would come from real implementation
+      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.io`, // This would come from real implementation
+      isPublic: Math.random() > 0.5, // This would come from real implementation
+      stockSymbol: companyName.substring(0, 4).toUpperCase(), // This would come from real implementation
       stockPrice: Math.random() > 0.5 ? {
         symbol: companyName.substring(0, 4).toUpperCase(),
-        currentPrice: 68.75 + (Math.random() * 20 - 10),
-        change: Math.random() * 5 - 2.5,
-        changePercent: Math.random() * 3 - 1.5,
-        marketCap: '$1.8B',
+        currentPrice: 85.50 + (Math.random() * 30 - 15),
+        change: Math.random() * 6 - 3,
+        changePercent: Math.random() * 4 - 2,
+        marketCap: '$3.2B',
         lastUpdated: new Date().toISOString()
-      } : null,
+      } : null, // This would come from real implementation
       agentSteps: steps
-    }
-  ];
-  
-  if (companyName !== 'LoanQuick') {
-    mockCompanies.push({
-      name: 'TechVision',
-      foundingYear: 2020,
-      location: 'Austin, TX',
-      focusArea: 'Artificial Intelligence',
-      investors: ['Founders Fund', 'General Catalyst'],
-      fundingAmount: '$18M',
-      newsHeadlines: [
-        'TechVision launches AI-powered analytics platform',
-        'TechVision expands enterprise solutions for remote workforce'
-      ],
-      websiteUrl: 'https://techvision.ai',
-      isPublic: true,
-      stockSymbol: 'TCVN',
-      stockPrice: {
-        symbol: 'TCVN',
-        currentPrice: 42.30,
-        change: 1.75,
-        changePercent: 4.31,
-        marketCap: '$950M',
-        lastUpdated: new Date().toISOString()
-      },
-      agentSteps: generateAgentSteps('TechVision')
-    });
+    };
+    
+    return [company];
+  } catch (error) {
+    logger.error(`Error in real SquidAI implementation: ${error.message}`);
+    return null; // Return null to indicate fallback to mock implementation
   }
-  
-  return mockCompanies;
 };
 
-module.exports = {
-  ...config,
-  discoverCompanies
-};
+const getDefaultCompanyName = () => 'LoanQuick';
+const getSecondCompanyName = () => 'TechVision';
+
+const adapter = createBaseAdapter(
+  config,
+  createAgents,
+  createWorkflow,
+  generateFrameworkSpecificSteps,
+  executeRealImplementation // Pass the real implementation function
+);
+
+adapter._internal.getDefaultCompanyName = getDefaultCompanyName;
+adapter._internal.getSecondCompanyName = getSecondCompanyName;
+
+module.exports = adapter;

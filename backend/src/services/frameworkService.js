@@ -1,6 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { logger } = require('../index');
+const { ServiceUnavailableError } = require('../utils/errorHandler');
 
 let frameworkAdapters = {};
 
@@ -56,7 +57,7 @@ const initializeFrameworks = async () => {
     logger.info(`Initialized ${Object.keys(frameworkAdapters).length} framework adapters`);
   } catch (error) {
     logger.error(`Error initializing framework adapters: ${error.message}`);
-    throw error;
+    throw new ServiceUnavailableError('Failed to initialize framework adapters');
   }
 };
 

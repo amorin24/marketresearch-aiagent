@@ -315,8 +315,15 @@ When contributing to this project:
 
 1. Follow the existing code style and patterns
 2. Add tests for new functionality
-3. Update documentation to reflect changes
+3. Update documentation to reflect changes, including:
+   - Update API documentation for new endpoints
+   - Update usage documentation for new features
+   - Update setup documentation for new configuration options
+   - Update architecture diagrams if component relationships change
+   - Update framework-specific documentation if framework adapters change
 4. Ensure all tests pass before submitting a pull request
+
+> **Important**: Whenever you add a new feature, make sure to update all relevant documentation. This includes markdown architecture diagrams, API documentation, usage guides, and setup instructions. Documentation should be created alongside the feature development rather than as an afterthought.
 
 ## Next Steps
 

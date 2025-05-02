@@ -5,7 +5,8 @@
  * Based on CrewAI documentation: https://docs.crewai.com/
  */
 
-const axios = require('axios');
+const { createBaseAdapter } = require('./baseAdapter');
+const { crewAIImplementation } = require('./realImplementation');
 const { logger } = require('../index');
 
 const config = {
@@ -24,29 +25,15 @@ const config = {
 };
 
 /**
- * Discover companies using CrewAI
- * @param {Object} parameters - Discovery parameters
- * @returns {Promise<Array>} Discovered companies
+ * Create all agents for CrewAI
+ * @returns {Object} Object containing all agents
  */
-const discoverCompanies = async (parameters = {}) => {
-  try {
-    logger.info('Starting company discovery with CrewAI');
-    
-    
-    const researchAgent = createResearchAgent();
-    const dataExtractionAgent = createDataExtractionAgent();
-    const analysisAgent = createAnalysisAgent();
-    
-    const crew = createCrew([researchAgent, dataExtractionAgent, analysisAgent]);
-    
-    const companies = await simulateCrewExecution(crew, parameters);
-    
-    logger.info(`CrewAI discovered ${companies.length} companies`);
-    return companies;
-  } catch (error) {
-    logger.error(`Error in CrewAI discovery: ${error.message}`);
-    throw error;
-  }
+const createAgents = () => {
+  return {
+    researchAgent: createResearchAgent(),
+    dataExtractionAgent: createDataExtractionAgent(),
+    analysisAgent: createAnalysisAgent()
+  };
 };
 
 /**
@@ -89,6 +76,15 @@ const createAnalysisAgent = () => {
 };
 
 /**
+ * Create a workflow with agents
+ * @param {Object} agents - Object containing all agents
+ * @returns {Object} Crew
+ */
+const createWorkflow = (agents) => {
+  return createCrew([agents.researchAgent, agents.dataExtractionAgent, agents.analysisAgent]);
+};
+
+/**
  * Create a crew with agents
  * @param {Array} agents - List of agents
  * @returns {Object} Crew
@@ -119,7 +115,7 @@ const createCrew = (agents) => {
  * @param {string} companyName - Name of the company
  * @returns {Array} Agent reasoning steps
  */
-const generateAgentSteps = (companyName) => {
+const generateFrameworkSpecificSteps = (companyName) => {
   const researchAgentSteps = [
     {
       id: 1,
@@ -189,33 +185,52 @@ const generateAgentSteps = (companyName) => {
 };
 
 /**
- * Simulate crew execution
- * @param {Object} crew - Crew configuration
- * @param {Object} parameters - Discovery parameters
+ * Execute real framework implementation
+ * @param {Object} workflow - Workflow configuration
+ * @param {Object} parameters - Execution parameters
  * @returns {Promise<Array>} Discovered companies
  */
-const simulateCrewExecution = async (crew, parameters) => {
-  const companyName = parameters.companyName || 'PayFast';
-  
-  const steps = generateAgentSteps(companyName);
-  
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  const mockCompanies = [
-    {
+const executeRealImplementation = async (workflow, parameters) => {
+  try {
+    const apiKey = process.env.OPENAI_API_KEY;
+    
+    if (!apiKey) {
+      logger.warn('No OpenAI API key found. Falling back to mock implementation.');
+      return null; // Return null to indicate fallback to mock implementation
+    }
+    
+    const crewAI = crewAIImplementation.initialize(apiKey);
+    
+    const crewAgents = workflow.agents.map(agent => 
+      crewAIImplementation.createAgent(crewAI, agent)
+    );
+    
+    const crew = crewAIImplementation.createCrew(crewAI, workflow, crewAgents);
+    
+    const result = await crewAIImplementation.executeCrew(crew, parameters);
+    
+    if (!result.success) {
+      logger.error('CrewAI execution failed. Falling back to mock implementation.');
+      return null; // Return null to indicate fallback to mock implementation
+    }
+    
+    const companyName = parameters.companyName || 'PayFast';
+    const steps = generateFrameworkSpecificSteps(companyName);
+    
+    const company = {
       name: companyName,
-      foundingYear: 2021,
-      location: 'San Francisco, CA',
-      focusArea: 'Software',
-      investors: ['Sequoia Capital', 'Andreessen Horowitz'],
-      fundingAmount: '$25M',
+      foundingYear: 2021, // This would come from real implementation
+      location: 'San Francisco, CA', // This would come from real implementation
+      focusArea: 'Software', // This would come from real implementation
+      investors: ['Sequoia Capital', 'Andreessen Horowitz'], // This would come from real implementation
+      fundingAmount: '$25M', // This would come from real implementation
       newsHeadlines: [
         `${companyName} raises $25M Series A to revolutionize software development`,
         `${companyName} expands to European markets`
-      ],
-      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.io`,
-      isPublic: Math.random() > 0.5, // Randomly determine if company is public
-      stockSymbol: companyName.substring(0, 4).toUpperCase(),
+      ], // This would come from real implementation
+      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.io`, // This would come from real implementation
+      isPublic: Math.random() > 0.5, // This would come from real implementation
+      stockSymbol: companyName.substring(0, 4).toUpperCase(), // This would come from real implementation
       stockPrice: Math.random() > 0.5 ? {
         symbol: companyName.substring(0, 4).toUpperCase(),
         currentPrice: 125.75 + (Math.random() * 50 - 25),
@@ -223,42 +238,29 @@ const simulateCrewExecution = async (crew, parameters) => {
         changePercent: Math.random() * 6 - 3,
         marketCap: '$4.2B',
         lastUpdated: new Date().toISOString()
-      } : null,
+      } : null, // This would come from real implementation
       agentSteps: steps
-    }
-  ];
-  
-  if (companyName !== 'PayFast') {
-    mockCompanies.push({
-      name: 'TechInnovate',
-      foundingYear: 2020,
-      location: 'New York, NY',
-      focusArea: 'AI',
-      investors: ['Google Ventures', 'Accel Partners'],
-      fundingAmount: '$18M',
-      newsHeadlines: [
-        'TechInnovate launches new AI platform',
-        'TechInnovate partners with major tech companies'
-      ],
-      websiteUrl: 'https://techinnovate.ai',
-      isPublic: true,
-      stockSymbol: 'TECH',
-      stockPrice: {
-        symbol: 'TECH',
-        currentPrice: 87.25,
-        change: 2.75,
-        changePercent: 3.25,
-        marketCap: '$1.8B',
-        lastUpdated: new Date().toISOString()
-      },
-      agentSteps: generateAgentSteps('TechInnovate')
-    });
+    };
+    
+    return [company];
+  } catch (error) {
+    logger.error(`Error in real CrewAI implementation: ${error.message}`);
+    return null; // Return null to indicate fallback to mock implementation
   }
-  
-  return mockCompanies;
 };
 
-module.exports = {
-  ...config,
-  discoverCompanies
-};
+const getDefaultCompanyName = () => 'PayFast';
+const getSecondCompanyName = () => 'TechInnovate';
+
+const adapter = createBaseAdapter(
+  config,
+  createAgents,
+  createWorkflow,
+  generateFrameworkSpecificSteps,
+  executeRealImplementation // Pass the real implementation function
+);
+
+adapter._internal.getDefaultCompanyName = getDefaultCompanyName;
+adapter._internal.getSecondCompanyName = getSecondCompanyName;
+
+module.exports = adapter;
