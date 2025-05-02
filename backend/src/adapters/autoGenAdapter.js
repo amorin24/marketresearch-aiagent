@@ -198,56 +198,91 @@ const executeRealImplementation = async (workflow, parameters) => {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
     
-    if (!apiKey) {
-      logger.warn('No OpenAI API key found. Falling back to mock implementation.');
+    if (!apiKey || apiKey === 'your_openai_api_key_here') {
+      logger.warn('No valid OpenAI API key found. Falling back to mock implementation.');
       return null; // Return null to indicate fallback to mock implementation
     }
     
-    const autoGen = autoGenImplementation.initialize(apiKey);
-    
-    const autoGenAgents = workflow.agents.map(agent => 
-      autoGenImplementation.createAgent(autoGen, agent)
-    );
-    
-    // Create AutoGen conversation
-    const conversation = autoGenImplementation.createConversation(autoGen, workflow, autoGenAgents);
-    
-    // Execute AutoGen conversation
-    const result = await autoGenImplementation.executeConversation(conversation, parameters);
+    // Execute the real implementation
+    const result = await autoGenImplementation.executeConversation(workflow, parameters);
     
     if (!result.success) {
       logger.error('AutoGen execution failed. Falling back to mock implementation.');
       return null; // Return null to indicate fallback to mock implementation
     }
     
-    const companyName = parameters.companyName || 'BlockPay';
+    const rawContent = result.rawContent || '';
+    logger.info(`Processing raw content from AutoGen: ${rawContent.substring(0, 100)}...`);
+    
+    const companyName = parameters.companyName || 'Unknown Company';
     const steps = generateFrameworkSpecificSteps(companyName);
     
+    const foundingYearMatch = rawContent.match(/founded in (\d{4})/i) || 
+                             rawContent.match(/founding year[:\s]+(\d{4})/i) ||
+                             rawContent.match(/established in (\d{4})/i);
+    
+    const locationMatch = rawContent.match(/headquartered in ([^\.]+)/i) || 
+                         rawContent.match(/headquarters[:\s]+([^\.]+)/i) ||
+                         rawContent.match(/based in ([^\.]+)/i);
+    
+    const focusAreaMatch = rawContent.match(/focuses on ([^\.]+)/i) || 
+                          rawContent.match(/focus area[:\s]+([^\.]+)/i) ||
+                          rawContent.match(/specializes in ([^\.]+)/i) ||
+                          rawContent.match(/industry[:\s]+([^\.]+)/i);
+    
+    const investorsMatch = rawContent.match(/investors include ([^\.]+)/i) || 
+                          rawContent.match(/backed by ([^\.]+)/i) ||
+                          rawContent.match(/investors[:\s]+([^\.]+)/i);
+    
+    const fundingMatch = rawContent.match(/raised (\$[0-9]+[MBT][^\.]+)/i) || 
+                        rawContent.match(/funding[:\s]+(\$[0-9]+[MBT][^\.]+)/i) ||
+                        rawContent.match(/secured (\$[0-9]+[MBT][^\.]+)/i);
+    
+    const newsMatch = rawContent.match(/recent news[:\s]+([^\.]+)/i) ||
+                     rawContent.match(/recent headlines[:\s]+([^\.]+)/i);
+    
+    const websiteMatch = rawContent.match(/website[:\s]+(https?:\/\/[^\s]+)/i) ||
+                        rawContent.match(/url[:\s]+(https?:\/\/[^\s]+)/i);
+    
+    const isPublic = rawContent.toLowerCase().includes('publicly traded') || 
+                    rawContent.toLowerCase().includes('public company') ||
+                    rawContent.toLowerCase().includes('stock symbol') ||
+                    rawContent.toLowerCase().includes('stock ticker');
+    
+    const stockSymbolMatch = rawContent.match(/stock symbol[:\s]+([A-Z]+)/i) ||
+                            rawContent.match(/ticker symbol[:\s]+([A-Z]+)/i) ||
+                            rawContent.match(/trades under the symbol[:\s]+([A-Z]+)/i) ||
+                            rawContent.match(/stock ticker[:\s]+([A-Z]+)/i);
+    
+    // Create the company object with extracted information
     const company = {
       name: companyName,
-      foundingYear: 2022, // This would come from real implementation
-      location: 'Austin, TX', // This would come from real implementation
-      focusArea: 'Technology', // This would come from real implementation
-      investors: ['Sequoia Capital', 'Andreessen Horowitz'], // This would come from real implementation
-      fundingAmount: '$18M', // This would come from real implementation
-      newsHeadlines: [
-        `${companyName} secures $18M to develop innovative technology solutions`,
-        `${companyName} launches new platform for enterprise customers`
-      ], // This would come from real implementation
-      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.tech`, // This would come from real implementation
-      isPublic: Math.random() > 0.5, // This would come from real implementation
-      stockSymbol: companyName.substring(0, 4).toUpperCase(), // This would come from real implementation
-      stockPrice: Math.random() > 0.5 ? {
-        symbol: companyName.substring(0, 4).toUpperCase(),
-        currentPrice: 78.25 + (Math.random() * 40 - 20),
-        change: Math.random() * 8 - 4,
-        changePercent: Math.random() * 5 - 2.5,
-        marketCap: '$2.8B',
-        lastUpdated: new Date().toISOString()
-      } : null, // This would come from real implementation
+      foundingYear: foundingYearMatch ? parseInt(foundingYearMatch[1]) : null,
+      location: locationMatch ? locationMatch[1].trim() : null,
+      focusArea: focusAreaMatch ? focusAreaMatch[1].trim() : null,
+      investors: investorsMatch ? investorsMatch[1].split(/,|\sand\s/).map(i => i.trim()) : [],
+      fundingAmount: fundingMatch ? fundingMatch[1].trim() : null,
+      newsHeadlines: newsMatch ? [newsMatch[1].trim()] : [],
+      websiteUrl: websiteMatch ? websiteMatch[1] : 
+                 `https://${companyName.toLowerCase().replace(/\s+/g, '')}.com`,
+      isPublic: isPublic,
+      stockSymbol: stockSymbolMatch ? stockSymbolMatch[1].trim() : null,
       agentSteps: steps
     };
     
+    if (company.isPublic && company.stockSymbol) {
+      try {
+        const stockPriceService = require('../services/stockPriceService');
+        const stockData = await stockPriceService.getStockPrice(company.stockSymbol);
+        if (stockData) {
+          company.stockPrice = stockData;
+        }
+      } catch (stockError) {
+        logger.error(`Error fetching stock data: ${stockError.message}`);
+      }
+    }
+    
+    logger.info(`Successfully extracted company information for ${companyName}`);
     return [company];
   } catch (error) {
     logger.error(`Error in real AutoGen implementation: ${error.message}`);

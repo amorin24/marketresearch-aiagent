@@ -3,7 +3,19 @@
  * Provides standardized error classes and error handling functions
  */
 
-const { logger } = require('../index');
+const winston = require('winston');
+const localLogger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' })
+  ]
+});
 
 /**
  * Base error class for application-specific errors
@@ -121,10 +133,27 @@ const sanitizeErrorMessage = (err) => {
  * @param {Function} next - Express next function
  */
 const globalErrorHandler = (err, req, res, next) => {
+  if (req.url.includes('/api/companies/discover/undefined')) {
+    return res.status(400).json({
+      status: 'error',
+      statusCode: 400,
+      message: 'Invalid job ID: undefined is not a valid job identifier'
+    });
+  }
+  
+  if (!err) {
+    err = new Error('Unknown error occurred');
+  }
+  
   let statusCode = err.statusCode || 500;
   let errorName = err.name || 'Error';
   
-  logger.error(`${errorName}: ${err.message}\n${err.stack}`);
+  try {
+    localLogger.error(`${errorName}: ${err.message || 'Unknown error'}\n${err.stack || 'No stack trace available'}`);
+  } catch (logError) {
+    console.error('Error in error logger:', logError);
+    console.error('Original error:', err);
+  }
   
   if (!(err instanceof AppError)) {
     const message = err.message || 'Internal Server Error';

@@ -14,13 +14,15 @@ const { logger } = require('../index');
  * @param {Function} createAgents - Function to create framework-specific agents
  * @param {Function} createWorkflow - Function to create a workflow with agents
  * @param {Function} generateFrameworkSpecificSteps - Function to generate framework-specific steps
+ * @param {Function} executeRealImplementation - Optional function to execute real framework implementation
  * @returns {Object} Framework adapter
  */
 const createBaseAdapter = (
   config,
   createAgents,
   createWorkflow,
-  generateFrameworkSpecificSteps
+  generateFrameworkSpecificSteps,
+  executeRealImplementation
 ) => {
   /**
    * Discover companies using the framework
@@ -35,9 +37,27 @@ const createBaseAdapter = (
       
       const workflow = createWorkflow(agents);
       
+      const adapterName = config.name || config.description.replace(' Framework Adapter', '');
+  if (executeRealImplementation && process.env[`${adapterName.toUpperCase().replace(/\s+/g, '')}_ENABLED`] === 'true') {
+        try {
+          logger.info(`Attempting to use real implementation for ${config.description}`);
+          const realResults = await executeRealImplementation(workflow, parameters);
+          
+          if (realResults) {
+            logger.info(`${config.description} discovered ${realResults.length} companies using real implementation`);
+            return realResults;
+          }
+          
+          logger.info(`Real implementation for ${config.description} returned no results, falling back to mock implementation`);
+        } catch (realImplError) {
+          logger.warn(`Error in real implementation for ${config.description}: ${realImplError.message}. Falling back to mock implementation.`);
+        }
+      }
+      
+      // Fall back to mock implementation
       const companies = await simulateExecution(workflow, parameters);
       
-      logger.info(`${config.description} discovered ${companies.length} companies`);
+      logger.info(`${config.description} discovered ${companies.length} companies using mock implementation`);
       return companies;
     } catch (error) {
       logger.error(`Error in ${config.description} discovery: ${error.message}`);

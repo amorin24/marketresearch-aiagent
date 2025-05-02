@@ -69,29 +69,52 @@ const crewAIImplementation = {
   executeCrew: async (crew, parameters) => {
     logger.info(`Executing CrewAI crew: ${crew.name}`);
     
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    return {
-      success: true,
-      results: [
-        {
-          agent: crew.agents[0].name,
-          task: 'Research',
-          output: `Found information about ${parameters.companyName || 'the company'}`
-        },
-        {
-          agent: crew.agents[1].name,
-          task: 'Data Extraction',
-          output: `Extracted key details about ${parameters.companyName || 'the company'}`
-        },
-        {
-          agent: crew.agents[2].name,
-          task: 'Analysis',
-          output: `Analyzed ${parameters.companyName || 'the company'} and determined relevance`
+    try {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey || apiKey === 'your_openai_api_key_here') {
+        throw new Error('Valid OpenAI API key required for CrewAI');
+      }
+      
+      logger.info('Making API call to OpenAI for CrewAI implementation');
+      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+        model: 'gpt-4',
+        messages: [
+          { 
+            role: 'system', 
+            content: `You are a financial research expert. Research ${parameters.companyName || 'the specified company'} and provide detailed information.` 
+          },
+          { 
+            role: 'user', 
+            content: `Find information about ${parameters.companyName || 'the specified company'} from credible sources. Include founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol. Format your response in a structured way that's easy to parse.` 
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 800
+      }, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
         }
-      ]
-    };
+      });
+      
+      const researchContent = response.data.choices[0].message.content;
+      logger.info(`Received research content from OpenAI for ${parameters.companyName || 'the company'}`);
+      
+      return {
+        success: true,
+        results: [
+          {
+            agent: crew.agents[0].name,
+            task: 'Research',
+            output: researchContent
+          }
+        ],
+        rawContent: researchContent
+      };
+    } catch (error) {
+      logger.error(`Error executing CrewAI: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   }
 };
 
@@ -155,26 +178,67 @@ const autoGenImplementation = {
   executeConversation: async (conversation, parameters) => {
     logger.info('Executing AutoGen conversation');
     
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    return {
-      success: true,
-      results: [
-        {
-          agent: conversation.agents[0].name,
-          message: `I need information about ${parameters.companyName || 'the company'}`
-        },
-        {
-          agent: conversation.agents[1].name,
-          message: `I found information about ${parameters.companyName || 'the company'} from public sources`
-        },
-        {
-          agent: conversation.agents[2].name,
-          message: `I've analyzed the data for ${parameters.companyName || 'the company'} and prepared a report`
+    try {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey || apiKey === 'your_openai_api_key_here') {
+        throw new Error('Valid OpenAI API key required for AutoGen');
+      }
+      
+      logger.info('Making API call to OpenAI for AutoGen implementation');
+      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+        model: 'gpt-4',
+        messages: [
+          { 
+            role: 'system', 
+            content: `You are a team of AI agents collaborating to research ${parameters.companyName || 'the specified company'}. Agent 1 is the user proxy, Agent 2 is the researcher, and Agent 3 is the analyst.` 
+          },
+          { 
+            role: 'user', 
+            content: `Research ${parameters.companyName || 'the specified company'} and provide detailed information including founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol. Format your response as a conversation between the three agents.` 
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 800
+      }, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
         }
-      ]
-    };
+      });
+      
+      const researchContent = response.data.choices[0].message.content;
+      logger.info(`Received research content from OpenAI for ${parameters.companyName || 'the company'}`);
+      
+      const agentMessages = [];
+      const lines = researchContent.split('\n');
+      
+      for (const line of lines) {
+        const agentMatch = line.match(/^(Agent \d|User Proxy|Researcher|Analyst):\s*(.*)/i);
+        if (agentMatch) {
+          const agentName = agentMatch[1];
+          const message = agentMatch[2];
+          agentMessages.push({ agent: agentName, message });
+        }
+      }
+      
+      return {
+        success: true,
+        results: agentMessages.length > 0 ? agentMessages : [
+          {
+            agent: conversation.agents[0].name,
+            message: `Research request for ${parameters.companyName || 'the company'}`
+          },
+          {
+            agent: conversation.agents[1].name,
+            message: researchContent
+          }
+        ],
+        rawContent: researchContent
+      };
+    } catch (error) {
+      logger.error(`Error executing AutoGen: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   }
 };
 
@@ -238,26 +302,66 @@ const langGraphImplementation = {
   executeGraph: async (graph, parameters) => {
     logger.info('Executing LangGraph graph');
     
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    return {
-      success: true,
-      results: [
-        {
-          node: graph.nodes[0].name,
-          output: `Researched ${parameters.companyName || 'the company'} across multiple sources`
-        },
-        {
-          node: graph.nodes[1].name,
-          output: `Extracted structured data about ${parameters.companyName || 'the company'}`
-        },
-        {
-          node: graph.nodes[2].name,
-          output: `Analyzed ${parameters.companyName || 'the company'} and calculated relevance score`
+    try {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey || apiKey === 'your_openai_api_key_here') {
+        throw new Error('Valid OpenAI API key required for LangGraph');
+      }
+      
+      logger.info('Making API call to OpenAI for LangGraph implementation');
+      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+        model: 'gpt-4',
+        messages: [
+          { 
+            role: 'system', 
+            content: `You are a LangGraph workflow with three nodes: Research, Extraction, and Analysis. Research ${parameters.companyName || 'the specified company'} and provide detailed information.` 
+          },
+          { 
+            role: 'user', 
+            content: `Execute a LangGraph workflow to research ${parameters.companyName || 'the specified company'}. 
+            1. Research Node: Find information about the company from credible sources.
+            2. Extraction Node: Extract founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol.
+            3. Analysis Node: Analyze the company's market position and relevance.
+            
+            Format your response as a structured workflow with outputs from each node.` 
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 800
+      }, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
         }
-      ]
-    };
+      });
+      
+      const researchContent = response.data.choices[0].message.content;
+      logger.info(`Received research content from OpenAI for ${parameters.companyName || 'the company'}`);
+      
+      const nodeOutputs = [];
+      const nodeRegex = /(\d+\.\s*(?:Research|Extraction|Analysis)\s*Node[^:]*:)([^]*?)(?=\d+\.\s*(?:Research|Extraction|Analysis)\s*Node|$)/gi;
+      
+      let match;
+      while ((match = nodeRegex.exec(researchContent)) !== null) {
+        const nodeName = match[1].trim().replace(/^\d+\.\s*/, '').replace(/\s*Node[^:]*:/, '');
+        const output = match[2].trim();
+        nodeOutputs.push({ node: nodeName, output });
+      }
+      
+      return {
+        success: true,
+        results: nodeOutputs.length > 0 ? nodeOutputs : [
+          {
+            node: graph.nodes[0].name,
+            output: researchContent
+          }
+        ],
+        rawContent: researchContent
+      };
+    } catch (error) {
+      logger.error(`Error executing LangGraph: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   }
 };
 
@@ -321,29 +425,67 @@ const squidAIImplementation = {
   executeNetwork: async (network, parameters) => {
     logger.info(`Executing SquidAI network: ${network.name}`);
     
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    return {
-      success: true,
-      results: [
-        {
-          agent: network.agents[0].name,
-          task: 'Information Gathering',
-          output: `Gathered information about ${parameters.companyName || 'the company'} from public sources`
-        },
-        {
-          agent: network.agents[1].name,
-          task: 'Data Processing',
-          output: `Processed and structured data about ${parameters.companyName || 'the company'}`
-        },
-        {
-          agent: network.agents[2].name,
-          task: 'Analysis',
-          output: `Analyzed ${parameters.companyName || 'the company'} and generated insights`
+    try {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey || apiKey === 'your_openai_api_key_here') {
+        throw new Error('Valid OpenAI API key required for SquidAI');
+      }
+      
+      logger.info('Making API call to OpenAI for SquidAI implementation');
+      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+        model: 'gpt-4',
+        messages: [
+          { 
+            role: 'system', 
+            content: `You are a SquidAI network with three specialized agents: Information Gatherer, Data Processor, and Analyst. Research ${parameters.companyName || 'the specified company'} and provide detailed information.` 
+          },
+          { 
+            role: 'user', 
+            content: `Execute a SquidAI network to research ${parameters.companyName || 'the specified company'}. 
+            1. Information Gatherer: Find information about the company from credible sources.
+            2. Data Processor: Extract founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol.
+            3. Analyst: Analyze the company's market position and relevance.
+            
+            Format your response as a structured network with outputs from each agent.` 
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 800
+      }, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
         }
-      ]
-    };
+      });
+      
+      const researchContent = response.data.choices[0].message.content;
+      logger.info(`Received research content from OpenAI for ${parameters.companyName || 'the company'}`);
+      
+      const agentOutputs = [];
+      const agentRegex = /(\d+\.\s*(?:Information Gatherer|Data Processor|Analyst)[^:]*:)([^]*?)(?=\d+\.\s*(?:Information Gatherer|Data Processor|Analyst)|$)/gi;
+      
+      let match;
+      while ((match = agentRegex.exec(researchContent)) !== null) {
+        const agentName = match[1].trim().replace(/^\d+\.\s*/, '').replace(/[^:]*:/, '');
+        const output = match[2].trim();
+        agentOutputs.push({ agent: agentName, task: agentName, output });
+      }
+      
+      return {
+        success: true,
+        results: agentOutputs.length > 0 ? agentOutputs : [
+          {
+            agent: network.agents[0].name,
+            task: 'Information Gathering',
+            output: researchContent
+          }
+        ],
+        rawContent: researchContent
+      };
+    } catch (error) {
+      logger.error(`Error executing SquidAI: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   }
 };
 
@@ -407,29 +549,67 @@ const lettaAIImplementation = {
   executeHierarchy: async (hierarchy, parameters) => {
     logger.info(`Executing LettaAI hierarchy: ${hierarchy.name}`);
     
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    return {
-      success: true,
-      results: [
-        {
-          agent: hierarchy.agents[0].name,
-          role: 'Coordinator',
-          output: `Coordinated research for ${parameters.companyName || 'the company'}`
-        },
-        {
-          agent: hierarchy.agents[1].name,
-          role: 'Data Collector',
-          output: `Collected data about ${parameters.companyName || 'the company'} from multiple sources`
-        },
-        {
-          agent: hierarchy.agents[2].name,
-          role: 'Analyzer',
-          output: `Analyzed ${parameters.companyName || 'the company'} and generated comprehensive report`
+    try {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey || apiKey === 'your_openai_api_key_here') {
+        throw new Error('Valid OpenAI API key required for LettaAI');
+      }
+      
+      logger.info('Making API call to OpenAI for LettaAI implementation');
+      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+        model: 'gpt-4',
+        messages: [
+          { 
+            role: 'system', 
+            content: `You are a LettaAI hierarchical agent system with three agents: Coordinator, Data Collector, and Analyzer. Research ${parameters.companyName || 'the specified company'} and provide detailed information.` 
+          },
+          { 
+            role: 'user', 
+            content: `Execute a LettaAI hierarchical workflow to research ${parameters.companyName || 'the specified company'}. 
+            1. Coordinator: Oversee the research process and coordinate between agents.
+            2. Data Collector: Collect information about the company including founding year, location, focus area, investors, funding, and recent news. Also indicate if the company is publicly traded, and if so, include its stock symbol.
+            3. Analyzer: Analyze the company's market position, relevance, and provide insights.
+            
+            Format your response as a structured hierarchy with outputs from each agent role.` 
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 800
+      }, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
         }
-      ]
-    };
+      });
+      
+      const researchContent = response.data.choices[0].message.content;
+      logger.info(`Received research content from OpenAI for ${parameters.companyName || 'the company'}`);
+      
+      const agentOutputs = [];
+      const agentRegex = /(\d+\.\s*(?:Coordinator|Data Collector|Analyzer)[^:]*:)([^]*?)(?=\d+\.\s*(?:Coordinator|Data Collector|Analyzer)|$)/gi;
+      
+      let match;
+      while ((match = agentRegex.exec(researchContent)) !== null) {
+        const agentName = match[1].trim().replace(/^\d+\.\s*/, '').replace(/[^:]*:/, '');
+        const output = match[2].trim();
+        agentOutputs.push({ agent: agentName, role: agentName, output });
+      }
+      
+      return {
+        success: true,
+        results: agentOutputs.length > 0 ? agentOutputs : [
+          {
+            agent: hierarchy.agents[0].name,
+            role: 'Coordinator',
+            output: researchContent
+          }
+        ],
+        rawContent: researchContent
+      };
+    } catch (error) {
+      logger.error(`Error executing LettaAI: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   }
 };
 
