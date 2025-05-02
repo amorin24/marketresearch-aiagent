@@ -309,6 +309,55 @@ The backend can be adapted to run as serverless functions:
 2. Update API routes to match serverless function endpoints
 3. Deploy to a serverless platform (AWS Lambda, Vercel, etc.)
 
+## OpenAI API Rate Limiting
+
+The platform implements proper rate limiting handling for OpenAI API calls to handle 429 (Too Many Requests) errors. Here's how it works:
+
+1. All OpenAI API calls are made through the `makeOpenAIRequest` utility function in `src/utils/openaiApiUtil.js`.
+2. This utility implements retry logic with exponential backoff using the `p-retry` library.
+3. When a 429 error is encountered, the system will:
+   - Log the rate limit error
+   - Wait with exponential backoff (increasing delay between retries)
+   - Retry up to the configured number of times (default: 3)
+   - Fall back to mock implementation if all retries fail
+
+You can configure the retry behavior using environment variables:
+```
+OPENAI_MAX_RETRIES=3          # Number of retry attempts
+OPENAI_INITIAL_RETRY_DELAY=1000  # Initial delay in ms before first retry
+```
+
+### Implementation Details
+
+The rate limiting handling is implemented in the following components:
+
+1. **OpenAI API Utility** (`src/utils/openaiApiUtil.js`):
+   - Centralizes all OpenAI API calls
+   - Validates API keys before making requests
+   - Implements retry logic with exponential backoff
+   - Handles different error types (429, 4xx, 5xx)
+   - Returns standardized response format
+
+2. **Framework Adapters**:
+   - All framework adapters use the OpenAI API utility
+   - Each adapter handles API failures gracefully
+   - Adapters fall back to mock implementation when API calls fail
+
+3. **Error Handling**:
+   - Detailed logging of rate limit errors
+   - Extraction of rate limit headers (if available)
+   - Proper error propagation to the client
+
+### Testing Rate Limit Handling
+
+To test the rate limit handling functionality:
+
+```bash
+node src/utils/testRateLimitHandling.js
+```
+
+This will make multiple rapid requests to the OpenAI API to deliberately trigger rate limiting and verify that the retry mechanism works correctly.
+
 ## Contributing
 
 When contributing to this project:
