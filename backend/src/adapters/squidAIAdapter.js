@@ -125,7 +125,7 @@ const generateFrameworkSpecificSteps = (companyName) => {
       name: 'search_execution',
       description: `Searcher agent executing distributed search for ${companyName} across multiple data sources.`,
       completed: true,
-      result: `Search complete. Found ${companyName} in 4 reliable sources: TechCrunch (3 articles), Yahoo Finance (2 mentions), LinkedIn company profile, and company website.`,
+      result: `Search complete. Found ${companyName} in 5 reliable sources: Yahoo Finance (comprehensive financial data), Business Insider (market analysis), Bloomberg (financial reports), TechCrunch (industry news), and LinkedIn company profile.`,
       timestamp: new Date(Date.now() - 16000)
     }
   ];
@@ -190,16 +190,18 @@ const executeRealImplementation = async (workflow, parameters) => {
     const apiKey = process.env.OPENAI_API_KEY;
     
     if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
-      logger.warn('No valid OpenAI API key found. OpenAI keys should start with sk-. Falling back to mock implementation.');
-      return null; // Return null to indicate fallback to mock implementation
+      const error = 'No valid OpenAI API key found. OpenAI keys should start with sk-. Please provide a valid API key.';
+      logger.error(error);
+      throw new Error(error);
     }
     
     // Execute the real implementation
     const result = await squidAIImplementation.executeNetwork(workflow, parameters);
     
     if (!result.success) {
-      logger.error('SquidAI execution failed. Falling back to mock implementation.');
-      return null; // Return null to indicate fallback to mock implementation
+      const errorMessage = result.error || 'SquidAI execution failed. Please check the logs for more details.';
+      logger.error(errorMessage);
+      throw new Error(errorMessage);
     }
     
     const rawContent = result.rawContent || '';
@@ -275,8 +277,9 @@ const executeRealImplementation = async (workflow, parameters) => {
     logger.info(`Successfully extracted company information for ${companyName}`);
     return [company];
   } catch (error) {
-    logger.error(`Error in real SquidAI implementation: ${error.message}`);
-    return null; // Return null to indicate fallback to mock implementation
+    const errorMessage = `Error in real SquidAI implementation: ${error.message}`;
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
   }
 };
 
