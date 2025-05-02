@@ -71,8 +71,8 @@ const crewAIImplementation = {
     
     try {
       const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey || apiKey === 'your_openai_api_key_here') {
-        throw new Error('Valid OpenAI API key required for CrewAI');
+      if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
+        throw new Error('Valid OpenAI API key required for CrewAI. OpenAI keys should start with sk-');
       }
       
       logger.info('Making API call to OpenAI for CrewAI implementation');
@@ -180,8 +180,8 @@ const autoGenImplementation = {
     
     try {
       const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey || apiKey === 'your_openai_api_key_here') {
-        throw new Error('Valid OpenAI API key required for AutoGen');
+      if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
+        throw new Error('Valid OpenAI API key required for AutoGen. OpenAI keys should start with sk-');
       }
       
       logger.info('Making API call to OpenAI for AutoGen implementation');
@@ -304,8 +304,8 @@ const langGraphImplementation = {
     
     try {
       const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey || apiKey === 'your_openai_api_key_here') {
-        throw new Error('Valid OpenAI API key required for LangGraph');
+      if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
+        throw new Error('Valid OpenAI API key required for LangGraph. OpenAI keys should start with sk-');
       }
       
       logger.info('Making API call to OpenAI for LangGraph implementation');
@@ -427,8 +427,8 @@ const squidAIImplementation = {
     
     try {
       const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey || apiKey === 'your_openai_api_key_here') {
-        throw new Error('Valid OpenAI API key required for SquidAI');
+      if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
+        throw new Error('Valid OpenAI API key required for SquidAI. OpenAI keys should start with sk-');
       }
       
       logger.info('Making API call to OpenAI for SquidAI implementation');
@@ -551,8 +551,8 @@ const lettaAIImplementation = {
     
     try {
       const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey || apiKey === 'your_openai_api_key_here') {
-        throw new Error('Valid OpenAI API key required for LettaAI');
+      if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
+        throw new Error('Valid OpenAI API key required for LettaAI. OpenAI keys should start with sk-');
       }
       
       logger.info('Making API call to OpenAI for LettaAI implementation');
