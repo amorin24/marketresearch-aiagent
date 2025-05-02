@@ -198,64 +198,90 @@ const executeRealImplementation = async (workflow, parameters) => {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
     
-    if (!apiKey) {
-      logger.warn('No OpenAI API key found. Falling back to mock implementation.');
+    if (!apiKey || apiKey === 'your_openai_api_key_here') {
+      logger.warn('No valid OpenAI API key found. Falling back to mock implementation.');
       return null; // Return null to indicate fallback to mock implementation
     }
     
-    // Initialize LangGraph/LangChain
-    const langGraph = langGraphImplementation.initialize(apiKey);
-    
-    const nodes = {};
-    workflow.nodes.forEach(node => {
-      nodes[node.name] = langGraphImplementation.createNode(langGraph, node);
-    });
-    
-    const edges = workflow.edges.map(edge => 
-      langGraphImplementation.createEdge(langGraph, edge.from, edge.to)
-    );
-    
-    const graph = langGraphImplementation.createGraph(langGraph, {
-      nodes,
-      edges,
-      entryPoint: workflow.entryPoint
-    });
-    
-    const result = await langGraphImplementation.executeGraph(graph, parameters);
+    // Execute the real implementation
+    const result = await langGraphImplementation.executeGraph(workflow, parameters);
     
     if (!result.success) {
       logger.error('LangGraph execution failed. Falling back to mock implementation.');
       return null; // Return null to indicate fallback to mock implementation
     }
     
-    const companyName = parameters.companyName || 'DataLend';
+    const rawContent = result.rawContent || '';
+    logger.info(`Processing raw content from LangGraph: ${rawContent.substring(0, 100)}...`);
+    
+    const companyName = parameters.companyName || 'Unknown Company';
     const steps = generateFrameworkSpecificSteps(companyName);
+    
+    const foundingYearMatch = rawContent.match(/founded in (\d{4})/i) || 
+                             rawContent.match(/founding year[:\s]+(\d{4})/i) ||
+                             rawContent.match(/established in (\d{4})/i);
+    
+    const locationMatch = rawContent.match(/headquartered in ([^\.]+)/i) || 
+                         rawContent.match(/headquarters[:\s]+([^\.]+)/i) ||
+                         rawContent.match(/based in ([^\.]+)/i);
+    
+    const focusAreaMatch = rawContent.match(/focuses on ([^\.]+)/i) || 
+                          rawContent.match(/focus area[:\s]+([^\.]+)/i) ||
+                          rawContent.match(/specializes in ([^\.]+)/i) ||
+                          rawContent.match(/industry[:\s]+([^\.]+)/i);
+    
+    const investorsMatch = rawContent.match(/investors include ([^\.]+)/i) || 
+                          rawContent.match(/backed by ([^\.]+)/i) ||
+                          rawContent.match(/investors[:\s]+([^\.]+)/i);
+    
+    const fundingMatch = rawContent.match(/raised (\$[0-9]+[MBT][^\.]+)/i) || 
+                        rawContent.match(/funding[:\s]+(\$[0-9]+[MBT][^\.]+)/i) ||
+                        rawContent.match(/secured (\$[0-9]+[MBT][^\.]+)/i);
+    
+    const newsMatch = rawContent.match(/recent news[:\s]+([^\.]+)/i) ||
+                     rawContent.match(/recent headlines[:\s]+([^\.]+)/i);
+    
+    const websiteMatch = rawContent.match(/website[:\s]+(https?:\/\/[^\s]+)/i) ||
+                        rawContent.match(/url[:\s]+(https?:\/\/[^\s]+)/i);
+    
+    const isPublic = rawContent.toLowerCase().includes('publicly traded') || 
+                    rawContent.toLowerCase().includes('public company') ||
+                    rawContent.toLowerCase().includes('stock symbol') ||
+                    rawContent.toLowerCase().includes('stock ticker');
+    
+    const stockSymbolMatch = rawContent.match(/stock symbol[:\s]+([A-Z]+)/i) ||
+                            rawContent.match(/ticker symbol[:\s]+([A-Z]+)/i) ||
+                            rawContent.match(/trades under the symbol[:\s]+([A-Z]+)/i) ||
+                            rawContent.match(/stock ticker[:\s]+([A-Z]+)/i);
     
     const company = {
       name: companyName,
-      foundingYear: 2022, // This would come from real implementation
-      location: 'London, UK', // This would come from real implementation
-      focusArea: 'Technology', // This would come from real implementation
-      investors: ['Sequoia Capital', 'Andreessen Horowitz'], // This would come from real implementation
-      fundingAmount: '£12M', // This would come from real implementation
-      newsHeadlines: [
-        `${companyName} secures £12M in Series A funding`,
-        `${companyName} expands operations to European markets`
-      ], // This would come from real implementation
-      websiteUrl: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.io`, // This would come from real implementation
-      isPublic: Math.random() > 0.5, // This would come from real implementation
-      stockSymbol: companyName.substring(0, 4).toUpperCase(), // This would come from real implementation
-      stockPrice: Math.random() > 0.5 ? {
-        symbol: companyName.substring(0, 4).toUpperCase(),
-        currentPrice: 105.25 + (Math.random() * 40 - 20),
-        change: Math.random() * 8 - 4,
-        changePercent: Math.random() * 5 - 2.5,
-        marketCap: '£3.5B',
-        lastUpdated: new Date().toISOString()
-      } : null, // This would come from real implementation
+      foundingYear: foundingYearMatch ? parseInt(foundingYearMatch[1]) : null,
+      location: locationMatch ? locationMatch[1].trim() : null,
+      focusArea: focusAreaMatch ? focusAreaMatch[1].trim() : null,
+      investors: investorsMatch ? investorsMatch[1].split(/,|\sand\s/).map(i => i.trim()) : [],
+      fundingAmount: fundingMatch ? fundingMatch[1].trim() : null,
+      newsHeadlines: newsMatch ? [newsMatch[1].trim()] : [],
+      websiteUrl: websiteMatch ? websiteMatch[1] : 
+                 `https://${companyName.toLowerCase().replace(/\s+/g, '')}.com`,
+      isPublic: isPublic,
+      stockSymbol: stockSymbolMatch ? stockSymbolMatch[1].trim() : null,
       agentSteps: steps
     };
     
+    if (company.isPublic && company.stockSymbol) {
+      try {
+        const stockPriceService = require('../services/stockPriceService');
+        const stockData = await stockPriceService.getStockPrice(company.stockSymbol);
+        if (stockData) {
+          company.stockPrice = stockData;
+        }
+      } catch (stockError) {
+        logger.error(`Error fetching stock data: ${stockError.message}`);
+      }
+    }
+    
+    logger.info(`Successfully extracted company information for ${companyName}`);
     return [company];
   } catch (error) {
     logger.error(`Error in real LangGraph implementation: ${error.message}`);

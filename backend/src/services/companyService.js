@@ -270,14 +270,21 @@ const startCompanyResearch = async (companyName, frameworkNames, email = null) =
         const discoveredCompanies = await framework.discoverCompanies({ companyName });
         
         let agentSteps = [];
+        let company = null;
+        
         if (!discoveredCompanies || !discoveredCompanies[0]) {
           logger.warn(`No companies discovered for "${companyName}" using framework "${frameworkName}". Defaulting agentSteps to an empty array.`);
-        } else if (!discoveredCompanies[0].agentSteps) {
-          logger.warn(`No agentSteps found for the first discovered company for "${companyName}" using framework "${frameworkName}". Defaulting agentSteps to an empty array.`);
         } else {
-          agentSteps = discoveredCompanies[0].agentSteps;
+          company = discoveredCompanies[0];
+          
+          if (!company.agentSteps) {
+            logger.warn(`No agentSteps found for the first discovered company for "${companyName}" using framework "${frameworkName}". Defaulting agentSteps to an empty array.`);
+          } else {
+            agentSteps = company.agentSteps;
+          }
         }
         
+        // Update job status with agent steps
         jobData.frameworkStatuses[frameworkName].steps = agentSteps;
         discoveryJobs.set(jobId, jobData);
         
@@ -288,41 +295,42 @@ const startCompanyResearch = async (companyName, frameworkNames, email = null) =
         
         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        // Generate a company result for this framework
-        const company = {
-          id: uuidv4(),
-          name: companyName,
-          discoveredBy: frameworkName,
-          discoveredAt: new Date(),
-          foundingYear: 2010 + Math.floor(Math.random() * 10),
-          location: ['San Francisco, CA', 'New York, NY', 'London, UK', 'Berlin, Germany', 'Toronto, Canada'][Math.floor(Math.random() * 5)],
-          focusArea: ['Software', 'Retail', 'Healthcare', 'Energy', 'Transportation', 'Media', 'AI', 'Cloud Computing'][Math.floor(Math.random() * 8)],
-          investors: ['Sequoia Capital', 'Andreessen Horowitz', 'Y Combinator', 'SoftBank', 'Tiger Global'].slice(0, 1 + Math.floor(Math.random() * 3)),
-          fundingAmount: `$${(5 + Math.floor(Math.random() * 95))}M`,
-          newsHeadlines: [
-            `${companyName} raises new funding round`,
-            `${companyName} launches new product`,
-            `${companyName} expands to new markets`
-          ],
-          websiteUrl: `https://www.${companyName.toLowerCase().replace(/\s+/g, '')}.com`,
-          isPublic: false,
-          stockSymbol: null,
-          stockPrice: null
-        };
+        if (!company) {
+          company = {
+            name: companyName,
+            foundingYear: null,
+            location: null,
+            focusArea: null,
+            investors: [],
+            fundingAmount: null,
+            newsHeadlines: [],
+            websiteUrl: `https://www.${companyName.toLowerCase().replace(/\s+/g, '')}.com`,
+            isPublic: false,
+            stockSymbol: null,
+            stockPrice: null,
+            agentSteps: []
+          };
+        }
         
-        try {
-          const stockSymbolData = await stockPriceService.getStockSymbol(companyName);
-          if (stockSymbolData) {
-            company.isPublic = true;
-            company.stockSymbol = stockSymbolData.symbol;
-            
-            const stockPriceData = await stockPriceService.getStockPrice(stockSymbolData.symbol);
-            if (stockPriceData) {
-              company.stockPrice = stockPriceData;
+        company.id = uuidv4();
+        company.discoveredBy = frameworkName;
+        company.discoveredAt = new Date();
+        
+        if (!company.stockPrice && !company.stockSymbol) {
+          try {
+            const stockSymbolData = await stockPriceService.getStockSymbol(companyName);
+            if (stockSymbolData) {
+              company.isPublic = true;
+              company.stockSymbol = stockSymbolData.symbol;
+              
+              const stockPriceData = await stockPriceService.getStockPrice(stockSymbolData.symbol);
+              if (stockPriceData) {
+                company.stockPrice = stockPriceData;
+              }
             }
+          } catch (error) {
+            logger.error(`Error retrieving stock data for ${companyName}: ${error.message}`);
           }
-        } catch (error) {
-          logger.error(`Error retrieving stock data for ${companyName}: ${error.message}`);
         }
         
         company.score = calculateScore(company);
@@ -338,9 +346,28 @@ const startCompanyResearch = async (companyName, frameworkNames, email = null) =
           totalScore: company.score
         };
         
-        company.summary = `${companyName} is a ${company.focusArea.toLowerCase()} company founded in ${company.foundingYear}. ` +
-                        `They have raised ${company.fundingAmount} from ${company.investors.join(', ')}. ` +
-                        `The company shows strong potential in the banking sector with a strategic relevance score of ${Math.round(relevanceScore)}/40.`;
+        // Generate summary if not already present
+        if (!company.summary) {
+          let summaryParts = [];
+          
+          if (company.focusArea && company.foundingYear) {
+            summaryParts.push(`${companyName} is a ${company.focusArea.toLowerCase()} company founded in ${company.foundingYear}.`);
+          } else if (company.focusArea) {
+            summaryParts.push(`${companyName} is a ${company.focusArea.toLowerCase()} company.`);
+          } else {
+            summaryParts.push(`${companyName} is a company operating in an unspecified industry.`);
+          }
+          
+          if (company.fundingAmount && company.investors && company.investors.length > 0) {
+            summaryParts.push(`They have raised ${company.fundingAmount} from ${company.investors.join(', ')}.`);
+          } else if (company.fundingAmount) {
+            summaryParts.push(`They have raised ${company.fundingAmount}.`);
+          }
+          
+          summaryParts.push(`The company shows ${relevanceScore > 30 ? 'strong' : 'moderate'} potential with a strategic relevance score of ${Math.round(relevanceScore)}/40.`);
+          
+          company.summary = summaryParts.join(' ');
+        }
         
         jobData = discoveryJobs.get(jobId);
         jobData.frameworkStatuses[frameworkName].status = 'completed';
