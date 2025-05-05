@@ -1,8 +1,11 @@
 import { useCompanyResearch } from '../context/CompanyResearchContext';
 import { useState } from 'react';
+import { useDeveloperMode } from '../context/DeveloperModeContext';
+import JsonDownloadButton from './JsonDownloadButton';
 
 const ComparisonDashboard = () => {
   const { researchJob, companyName } = useCompanyResearch();
+  const { compactView } = useDeveloperMode();
   const [expandedSummary, setExpandedSummary] = useState<string | null>(null);
   
   if (!researchJob || !researchJob.frameworkResults || Object.keys(researchJob.frameworkResults).length === 0) {
@@ -29,21 +32,6 @@ const ComparisonDashboard = () => {
     return 'bg-gray-100 text-gray-600';
   };
   
-  const renderScoreBar = (score: number, maxScore: number, colorClass: string) => {
-    const percentage = (score / maxScore) * 100;
-    return (
-      <div className="flex items-center">
-        <span className="mr-2 w-12 text-sm font-medium">{score}/{maxScore}</span>
-        <div className="flex-grow bg-gray-100 rounded-full h-2.5">
-          <div 
-            className={`h-2.5 rounded-full ${colorClass}`}
-            style={{ width: `${percentage}%` }}
-          ></div>
-        </div>
-      </div>
-    );
-  };
-  
   const toggleSummary = (framework: string) => {
     if (expandedSummary === framework) {
       setExpandedSummary(null);
@@ -63,7 +51,8 @@ const ComparisonDashboard = () => {
         </h2>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      {/* Vertical stack of framework panels instead of grid */}
+      <div className="space-y-4">
         {frameworks.map(framework => {
           const result = researchJob.frameworkResults[framework];
           const scoreBreakdown = result.scoreBreakdown || {
@@ -74,51 +63,76 @@ const ComparisonDashboard = () => {
           };
           
           return (
-            <div key={framework} className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div key={framework} className="bg-white rounded-lg border border-gray-200 shadow-sm">
               <div className="p-5 border-b border-gray-200">
-                <div className="flex items-center">
-                  <div className={`flex-shrink-0 h-10 w-10 rounded-full ${getFrameworkIconClass(framework)} flex items-center justify-center font-bold text-lg`}>
-                    {getFrameworkDisplayName(framework).charAt(0)}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className={`flex-shrink-0 h-10 w-10 rounded-full ${getFrameworkIconClass(framework)} flex items-center justify-center font-bold text-lg`}>
+                      {getFrameworkDisplayName(framework).charAt(0)}
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-lg font-semibold text-gray-900">{getFrameworkDisplayName(framework)}</h3>
+                    </div>
                   </div>
-                  <div className="ml-3">
-                    <h3 className="text-lg font-semibold text-gray-900">{getFrameworkDisplayName(framework)}</h3>
+                  
+                  {/* Score badge - simplified */}
+                  <div className="bg-gray-100 px-3 py-1 rounded-full">
+                    <span className="text-sm font-medium text-gray-700">Score: {scoreBreakdown.totalScore}</span>
                   </div>
                 </div>
               </div>
               
-              <div className="p-5">
-                <div className="mb-4">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium text-gray-700">Total Score</span>
-                    <span className="text-sm font-bold text-indigo-600">{scoreBreakdown.totalScore}/100</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-3">
-                    <div 
-                      className="bg-indigo-600 h-3 rounded-full"
-                      style={{ width: `${scoreBreakdown.totalScore}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-xs font-medium text-gray-500">Funding (30%)</span>
-                    {renderScoreBar(scoreBreakdown.fundingScore, 30, 'bg-green-500')}
-                  </div>
-                  
-                  <div>
-                    <span className="text-xs font-medium text-gray-500">Market Buzz (30%)</span>
-                    {renderScoreBar(scoreBreakdown.buzzScore, 30, 'bg-blue-500')}
-                  </div>
-                  
-                  <div>
-                    <span className="text-xs font-medium text-gray-500">Strategic Relevance (40%)</span>
-                    {renderScoreBar(scoreBreakdown.relevanceScore, 40, 'bg-purple-500')}
+              {/* Raw JSON output for developer view */}
+              <div className="p-5 border-b border-gray-200">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-sm font-medium text-gray-700">Raw Data</h4>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(JSON.stringify(result, null, 2));
+                      }}
+                      className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                      </svg>
+                      Copy
+                    </button>
+                    <JsonDownloadButton data={result} filename={`${framework}-result`} />
                   </div>
                 </div>
+                <pre className="bg-gray-50 p-4 rounded-lg overflow-x-auto text-xs font-mono border border-gray-200 max-h-60">
+                  {JSON.stringify(result, null, 2)}
+                </pre>
               </div>
               
-              <div className="p-5 border-t border-gray-200 bg-gray-50">
+              {/* Only show detailed score breakdown in non-compact view */}
+              {!compactView && (
+                <div className="p-5 border-b border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Score Breakdown</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Funding (30%)</span>
+                      <span className="font-medium">{scoreBreakdown.fundingScore}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Market Buzz (30%)</span>
+                      <span className="font-medium">{scoreBreakdown.buzzScore}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Strategic Relevance (40%)</span>
+                      <span className="font-medium">{scoreBreakdown.relevanceScore}</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-gray-100">
+                      <span className="font-medium text-gray-700">Total</span>
+                      <span className="font-medium">{scoreBreakdown.totalScore}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Summary section */}
+              <div className="p-5 bg-gray-50">
                 <div>
                   <div 
                     className="flex justify-between items-center cursor-pointer"
@@ -146,99 +160,70 @@ const ComparisonDashboard = () => {
         })}
       </div>
       
-      <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Framework
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Total Score
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Funding
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Buzz
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Relevance
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {frameworks.map(framework => {
-              const result = researchJob.frameworkResults[framework];
-              const scoreBreakdown = result.scoreBreakdown || {
-                fundingScore: 0,
-                buzzScore: 0,
-                relevanceScore: 0,
-                totalScore: result.score
-              };
-              
-              return (
-                <tr key={framework} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className={`flex-shrink-0 h-8 w-8 rounded-full ${getFrameworkIconClass(framework)} flex items-center justify-center font-bold`}>
-                        {getFrameworkDisplayName(framework).charAt(0)}
+      {/* Simplified comparison table - only shown in non-compact view */}
+      {!compactView && (
+        <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Framework
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total Score
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Funding
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Buzz
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Relevance
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {frameworks.map(framework => {
+                const result = researchJob.frameworkResults[framework];
+                const scoreBreakdown = result.scoreBreakdown || {
+                  fundingScore: 0,
+                  buzzScore: 0,
+                  relevanceScore: 0,
+                  totalScore: result.score
+                };
+                
+                return (
+                  <tr key={framework} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className={`flex-shrink-0 h-8 w-8 rounded-full ${getFrameworkIconClass(framework)} flex items-center justify-center font-bold`}>
+                          {getFrameworkDisplayName(framework).charAt(0)}
+                        </div>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-gray-900">{getFrameworkDisplayName(framework)}</div>
+                        </div>
                       </div>
-                      <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900">{getFrameworkDisplayName(framework)}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium text-gray-900 mr-2">{scoreBreakdown.totalScore}</span>
-                      <div className="w-24 bg-gray-100 rounded-full h-2">
-                        <div 
-                          className="bg-indigo-600 h-2 rounded-full"
-                          style={{ width: `${scoreBreakdown.totalScore}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium text-gray-900 mr-2">{scoreBreakdown.fundingScore}</span>
-                      <div className="w-16 bg-gray-100 rounded-full h-2">
-                        <div 
-                          className="bg-green-500 h-2 rounded-full"
-                          style={{ width: `${(scoreBreakdown.fundingScore / 30) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium text-gray-900 mr-2">{scoreBreakdown.buzzScore}</span>
-                      <div className="w-16 bg-gray-100 rounded-full h-2">
-                        <div 
-                          className="bg-blue-500 h-2 rounded-full"
-                          style={{ width: `${(scoreBreakdown.buzzScore / 30) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium text-gray-900 mr-2">{scoreBreakdown.relevanceScore}</span>
-                      <div className="w-16 bg-gray-100 rounded-full h-2">
-                        <div 
-                          className="bg-purple-500 h-2 rounded-full"
-                          style={{ width: `${(scoreBreakdown.relevanceScore / 40) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900">{scoreBreakdown.totalScore}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900">{scoreBreakdown.fundingScore}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900">{scoreBreakdown.buzzScore}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900">{scoreBreakdown.relevanceScore}</span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

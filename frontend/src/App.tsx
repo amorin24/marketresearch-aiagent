@@ -7,26 +7,29 @@ import Settings from './pages/Settings'
 import Layout from './components/Layout'
 import { FrameworkProvider } from './context/FrameworkContext'
 import { CompanyResearchProvider } from './context/CompanyResearchContext'
+import { DeveloperModeProvider } from './context/DeveloperModeContext'
 import ChartTest from './components/test/ChartTest'
 
 function App() {
   return (
-    <FrameworkProvider>
-      <CompanyResearchProvider>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/company/:id" element={<CompanyDetails />} />
-            <Route path="/compare" element={<>
-              <ChartTest />
-              <FrameworkComparison />
-            </>} />
-            <Route path="/research" element={<CompanyResearch />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
-        </Layout>
-      </CompanyResearchProvider>
-    </FrameworkProvider>
+    <DeveloperModeProvider>
+      <FrameworkProvider>
+        <CompanyResearchProvider>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/company/:id" element={<CompanyDetails />} />
+              <Route path="/compare" element={<>
+                <ChartTest />
+                <FrameworkComparison />
+              </>} />
+              <Route path="/research" element={<CompanyResearch />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </Layout>
+        </CompanyResearchProvider>
+      </FrameworkProvider>
+    </DeveloperModeProvider>
   )
 }
 

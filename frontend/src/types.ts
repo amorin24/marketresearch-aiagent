@@ -33,6 +33,7 @@ export interface Company {
   stockSymbol?: string;
   stockPrice?: StockPrice;
   agentSteps?: ResearchStep[];
+  logs?: string;
 }
 
 export interface Framework {
