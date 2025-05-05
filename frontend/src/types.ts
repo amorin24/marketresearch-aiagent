@@ -33,6 +33,7 @@ export interface Company {
   stockSymbol?: string;
   stockPrice?: StockPrice;
   agentSteps?: ResearchStep[];
+  logs?: string;
 }
 
 export interface Framework {
@@ -82,8 +83,24 @@ export interface DiscoveryJob {
   startTime: string;
   endTime: string | null;
   error: string | null;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   companiesCount?: number;
+}
+
+export interface FrameworkComparisonData {
+  performance: {
+    avgRunTime: number;
+    completionRate: number;
+    apiSuccessRate: number;
+    totalRuns: number;
+  };
+  capabilities: string[];
+  limitations: string[];
+  details: {
+    description: string;
+    version: string;
+    lastUpdated: string;
+  };
 }
 
 export interface ResearchStep {

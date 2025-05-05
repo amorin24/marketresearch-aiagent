@@ -6,15 +6,17 @@ interface TimelineStepProps {
   colorScheme: {
     accent: string;
   };
-  formatTimestamp: (_timestamp: string | null) => string;
-  extractAgentInfo: (_description: string) => { agentName: string | null; stepDescription: string };
+  formatTimestamp: (timestamp: string | null) => string;
+  extractAgentInfo: (description: string) => { agentName: string | null; stepDescription: string };
+  index: number;
 }
 
 const TimelineStep: React.FC<TimelineStepProps> = ({
   step,
   colorScheme,
   formatTimestamp,
-  extractAgentInfo
+  extractAgentInfo,
+  index
 }) => {
   const isCompleted = step.completed;
   const isInProgress = !step.completed && step.timestamp;
@@ -34,6 +36,11 @@ const TimelineStep: React.FC<TimelineStepProps> = ({
   
   return (
     <div className="relative pl-12">
+      {/* Step number */}
+      <div className="absolute left-0 top-2 text-xs font-mono text-gray-500 w-6 text-right">
+        {index + 1}.
+      </div>
+      
       {/* Timeline dot */}
       <div 
         className={`absolute left-[18px] -translate-x-1/2 w-4 h-4 rounded-full border-2 z-10 ${dotClasses}`}
@@ -78,7 +85,7 @@ const TimelineStep: React.FC<TimelineStepProps> = ({
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>{step.result}</span>
+              <span className="whitespace-pre-wrap font-mono text-xs">{step.result}</span>
             </div>
           </div>
         )}
