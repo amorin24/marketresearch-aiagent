@@ -31,7 +31,7 @@ const researchRoutes = require('./controllers/researchController');
 const emailService = require('./services/emailService');
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 8080;
 
 emailService.initializeEmailService();
 
