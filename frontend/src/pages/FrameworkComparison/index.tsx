@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useFramework } from '../../context/FrameworkContext';
-import { Framework } from '../../types';
+import { Framework, FrameworkComparisonData } from '../../types';
 import PerformanceChart from '../../components/PerformanceChart';
 import FeatureComparison from '../../components/FeatureComparison';
 import EnhancedFrameworkSelector from '../../components/EnhancedFrameworkSelector';
@@ -14,7 +14,7 @@ const FrameworkComparison = () => {
     const saved = localStorage.getItem('selectedFrameworks');
     return saved ? JSON.parse(saved) : [];
   });
-  const [comparisonData, setComparisonData] = useState<Record<string, any>>({});
+  const [comparisonData, setComparisonData] = useState<Record<string, FrameworkComparisonData>>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'performance' | 'capabilities' | 'limitations' | 'details'>('performance');
   const [chartType, setChartType] = useState<'bar' | 'radar'>('bar');
@@ -71,7 +71,7 @@ const FrameworkComparison = () => {
       
       console.log('Using mock comparison data for frameworks:', selectedFrameworks);
       
-      const mockData = selectedFrameworks.reduce<Record<string, any>>((acc, framework) => {
+      const mockData = selectedFrameworks.reduce<Record<string, FrameworkComparisonData>>((acc, framework) => {
         acc[framework] = {
           performance: {
             avgRunTime: Math.random() * 10 + 1,
@@ -306,7 +306,7 @@ const FrameworkComparison = () => {
                       <select
                         id="metric-select"
                         value={selectedMetric}
-                        onChange={(e) => setSelectedMetric(e.target.value as any)}
+                        onChange={(e) => setSelectedMetric(e.target.value as 'completionRate' | 'apiSuccessRate' | 'avgRunTime')}
                         className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                       >
                         <option value="completionRate">Completion Rate</option>
@@ -321,7 +321,7 @@ const FrameworkComparison = () => {
                       <select
                         id="chart-type"
                         value={chartType}
-                        onChange={(e) => setChartType(e.target.value as any)}
+                        onChange={(e) => setChartType(e.target.value as 'bar' | 'radar')}
                         className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                       >
                         <option value="bar">Bar Chart</option>

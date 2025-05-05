@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface JsonDownloadButtonProps {
-  data: any;
+  data: Record<string, unknown>;
   filename: string;
 }
 
