@@ -12,7 +12,7 @@ interface AgentStep {
 interface AgentLogsSectionProps {
   steps: AgentStep[];
   error?: string | object | null;
-  onCopy: (data: any) => void;
+  onCopy: (steps: AgentStep[]) => void;
 }
 
 const AgentLogsSection: React.FC<AgentLogsSectionProps> = ({

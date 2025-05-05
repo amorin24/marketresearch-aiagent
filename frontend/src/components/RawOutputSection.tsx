@@ -2,10 +2,10 @@ import React from 'react';
 import JsonDownloadButton from './JsonDownloadButton';
 
 interface RawOutputSectionProps {
-  result: any;
+  result: Record<string, unknown>;
   companyName: string;
   frameworkName: string;
-  onCopy: (data: any) => void;
+  onCopy: (_result: Record<string, unknown>) => void;
 }
 
 const RawOutputSection: React.FC<RawOutputSectionProps> = ({
