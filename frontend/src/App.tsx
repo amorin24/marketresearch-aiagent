@@ -9,6 +9,8 @@ import { FrameworkProvider } from './context/FrameworkContext'
 import { CompanyResearchProvider } from './context/CompanyResearchContext'
 import { DeveloperModeProvider } from './context/DeveloperModeContext'
 import ChartTest from './components/test/ChartTest'
+import Benchmark from './pages/Benchmark'
+import SequentialResearch from './pages/SequentialResearch'
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
               </>} />
               <Route path="/research" element={<CompanyResearch />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/benchmark" element={<Benchmark />} />
+              <Route path="/sequential" element={<SequentialResearch />} />
             </Routes>
           </Layout>
         </CompanyResearchProvider>

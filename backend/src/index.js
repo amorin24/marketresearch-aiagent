@@ -27,6 +27,7 @@ exports.logger = logger;
 const companyRoutes = require('./controllers/companyController');
 const frameworkRoutes = require('./controllers/frameworkController');
 const configRoutes = require('./controllers/configController');
+const researchRoutes = require('./controllers/researchController');
 const emailService = require('./services/emailService');
 
 const app = express();
@@ -53,6 +54,7 @@ app.use('/api', apiLimiter);
 app.use('/api/companies', companyRoutes);
 app.use('/api/frameworks', frameworkRoutes);
 app.use('/api/config', configRoutes);
+app.use('/api/research', researchRoutes);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });

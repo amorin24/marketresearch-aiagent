@@ -39,4 +39,19 @@ router.post('/compare', asyncHandler(async (req, res) => {
   res.json(comparison);
 }));
 
+router.post('/benchmark', asyncHandler(async (req, res) => {
+  const { frameworks, testCases } = req.body;
+  
+  if (!frameworks || !Array.isArray(frameworks) || frameworks.length < 1) {
+    throw new ValidationError('At least one framework must be specified for benchmarking');
+  }
+  
+  if (!testCases || !Array.isArray(testCases) || testCases.length < 1) {
+    throw new ValidationError('At least one test case must be provided for benchmarking');
+  }
+  
+  const benchmarkResults = await frameworkService.benchmarkFrameworks(frameworks, testCases);
+  res.json(benchmarkResults);
+}));
+
 module.exports = router;

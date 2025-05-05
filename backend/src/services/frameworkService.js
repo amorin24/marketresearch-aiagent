@@ -172,6 +172,77 @@ const compareFrameworks = async (frameworkNames) => {
   return results;
 };
 
+/**
+ * Benchmark multiple frameworks with a set of test cases
+ * @param {Array} frameworkNames - List of framework names to benchmark
+ * @param {Array} testCases - List of test cases to run
+ * @returns {Object} Benchmark results
+ */
+const benchmarkFrameworks = async (frameworkNames, testCases) => {
+  if (Object.keys(frameworkAdapters).length === 0) {
+    await initializeFrameworks();
+  }
+  
+  const results = {};
+  const startTime = Date.now();
+  
+  for (const name of frameworkNames) {
+    if (!frameworkAdapters[name]) continue;
+    
+    const adapter = frameworkAdapters[name];
+    const adapterResults = [];
+    
+    for (const testCase of testCases) {
+      try {
+        const caseStartTime = Date.now();
+        const companies = await adapter.discoverCompanies({ 
+          companyName: testCase.companyName 
+        });
+        const caseEndTime = Date.now();
+        
+        adapterResults.push({
+          testCase: testCase.name,
+          success: companies && companies.length > 0,
+          executionTime: caseEndTime - caseStartTime,
+          companies
+        });
+      } catch (error) {
+        adapterResults.push({
+          testCase: testCase.name,
+          success: false,
+          error: error.message
+        });
+      }
+    }
+    
+    // Update performance metrics
+    const successfulTests = adapterResults.filter(r => r.success).length;
+    const totalExecutionTime = adapterResults.reduce((acc, r) => acc + (r.executionTime || 0), 0);
+    const averageExecutionTime = testCases.length > 0 ? totalExecutionTime / testCases.length : 0;
+    
+    await updateFrameworkPerformance(name, {
+      avgRunTime: averageExecutionTime,
+      completionRate: (successfulTests / testCases.length) * 100,
+      totalRuns: currentMetrics => currentMetrics.totalRuns + testCases.length,
+      successfulRuns: currentMetrics => currentMetrics.successfulRuns + successfulTests,
+      failedRuns: currentMetrics => currentMetrics.failedRuns + (testCases.length - successfulTests)
+    });
+    
+    results[name] = {
+      totalTests: testCases.length,
+      successfulTests,
+      averageExecutionTime,
+      results: adapterResults
+    };
+  }
+  
+  const endTime = Date.now();
+  return {
+    frameworks: results,
+    totalExecutionTime: endTime - startTime
+  };
+};
+
 module.exports = {
   initializeFrameworks,
   getAvailableFrameworks,
@@ -179,5 +250,6 @@ module.exports = {
   getFrameworkAdapter,
   getFrameworkPerformance,
   updateFrameworkPerformance,
-  compareFrameworks
+  compareFrameworks,
+  benchmarkFrameworks
 };

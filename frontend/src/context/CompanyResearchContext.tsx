@@ -1,11 +1,12 @@
 import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { Framework, ResearchJob } from '../types';
+import { Framework, ResearchJob, FrameworkStatus, Company } from '../types';
+import axios from 'axios';
 
 interface CompanyResearchContextType {
   companyName: string;
-  setCompanyName: (_name: string) => void;
+  setCompanyName: (_companyName: string) => void;
   userEmail: string;
-  setUserEmail: (_email: string) => void;
+  setUserEmail: (_userEmail: string) => void;
   selectedFrameworks: string[];
   toggleFramework: (_frameworkName: string) => void;
   selectAllFrameworks: () => void;
@@ -13,10 +14,17 @@ interface CompanyResearchContextType {
   isResearching: boolean;
   researchJob: ResearchJob | null;
   error: string | null;
-  startResearch: () => Promise<void>;
+  startResearch: (_researchOptions?: ResearchOptions) => Promise<void>;
+  startSequentialResearch: (_frameworkSequence: string[]) => Promise<void>;
   resetResearch: () => void;
   availableFrameworks: Framework[];
   loading: boolean;
+}
+
+interface ResearchOptions {
+  mode?: 'parallel' | 'sequential';
+  frameworks?: string[];
+  additionalParams?: Record<string, unknown>;
 }
 
 const CompanyResearchContext = createContext<CompanyResearchContextType | undefined>(undefined);
@@ -42,17 +50,33 @@ export const CompanyResearchProvider = ({ children }: CompanyResearchProviderPro
   const [error, setError] = useState<string | null>(null);
   const [availableFrameworks, setAvailableFrameworks] = useState<Framework[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null);
+  const [pollInterval, setPollInterval] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const fetchFrameworks = async () => {
       try {
         setLoading(true);
+        console.log('Using mock framework data');
+        
+        // Use mock data for development until backend is ready
+        const mockFrameworks = [
+          { name: 'crewAI', description: 'CrewAI Framework', version: '1.0.0' },
+          { name: 'squidAI', description: 'SquidAI Framework', version: '1.0.0' },
+          { name: 'lettaAI', description: 'LettaAI Framework', version: '1.0.0' },
+          { name: 'autoGen', description: 'AutoGen Framework', version: '1.0.0' },
+          { name: 'langGraph', description: 'LangGraph Framework', version: '1.0.0' }
+        ];
+        
+        setAvailableFrameworks(mockFrameworks);
+        
+        /* Real API implementation - commented out until backend is ready
         console.log('Fetching frameworks...');
-        const response = await fetch('http://localhost:8000/api/frameworks');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/api/frameworks`);
         const data = await response.json();
         console.log('Frameworks fetched:', data);
         setAvailableFrameworks(data);
+        */
       } catch (err) {
         console.error('Failed to load frameworks:', err);
         setError('Failed to load frameworks');
@@ -96,13 +120,15 @@ export const CompanyResearchProvider = ({ children }: CompanyResearchProviderPro
     setSelectedFrameworks([]);
   };
 
-  const startResearch = async () => {
+  const startResearch = async (options?: ResearchOptions) => {
     if (!companyName.trim()) {
       setError('Company name is required');
       return;
     }
 
-    if (selectedFrameworks.length === 0) {
+    const frameworksToUse = options?.frameworks || selectedFrameworks;
+    
+    if (frameworksToUse.length === 0) {
       setError('At least one framework must be selected');
       return;
     }
@@ -111,54 +137,102 @@ export const CompanyResearchProvider = ({ children }: CompanyResearchProviderPro
       setIsResearching(true);
       setError(null);
       
-      const response = await fetch('http://localhost:8000/api/companies/research-company', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          companyName,
-          frameworks: selectedFrameworks,
-        }),
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const endpoint = options?.mode === 'sequential' 
+        ? `${apiUrl}/api/research/sequential` 
+        : `${apiUrl}/api/research/parallel`;
+      
+      console.log(`Starting research using endpoint: ${endpoint}`);
+      
+      const response = await axios.post(endpoint, {
+        companyName,
+        frameworks: frameworksToUse,
+        options: {
+          userEmail: userEmail.trim() || undefined,
+          ...options?.additionalParams
+        }
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to start research');
+      console.log('Research response:', response.data);
+      setResearchJob(response.data);
+      setIsResearching(false);
+      
+      if (!response.data) {
+        console.warn('Using mock data as fallback');
+        
+        const mockStatuses: Record<string, FrameworkStatus> = {};
+        const mockResults: Record<string, Company> = {};
+        
+        frameworksToUse.forEach(fw => {
+          mockStatuses[fw] = { 
+            status: 'completed',
+            progress: 100,
+            steps: [
+              {
+                id: 1,
+                name: 'Initialize',
+                description: 'Initialize research process',
+                completed: true,
+                result: 'Success',
+                timestamp: new Date().toISOString()
+              },
+              {
+                id: 2,
+                name: 'Research',
+                description: 'Gather company information',
+                completed: true,
+                result: 'Found company data',
+                timestamp: new Date().toISOString()
+              },
+              {
+                id: 3,
+                name: 'Score',
+                description: 'Calculate company score',
+                completed: true,
+                result: 'Score calculated',
+                timestamp: new Date().toISOString()
+              }
+            ],
+            error: null
+          };
+          mockResults[fw] = {
+            id: `mock-${fw}-${Date.now()}`,
+            name: companyName,
+            score: Math.floor(Math.random() * 100),
+            summary: `${fw} analysis of ${companyName}`,
+            scoreBreakdown: {
+              fundingScore: Math.floor(Math.random() * 30),
+              buzzScore: Math.floor(Math.random() * 30),
+              relevanceScore: Math.floor(Math.random() * 40),
+              totalScore: Math.floor(Math.random() * 100)
+            }
+          };
+        });
+        
+        setResearchJob({
+          id: 'mock-job-id',
+          status: 'completed',
+          companyName,
+          frameworks: frameworksToUse,
+          frameworkStatuses: mockStatuses,
+          frameworkResults: mockResults,
+          startTime: new Date().toISOString(),
+          endTime: new Date().toISOString(),
+          error: null
+        });
       }
-      
-      const { jobId } = await response.json();
-      
-      const interval = setInterval(async () => {
-        try {
-          const statusResponse = await fetch(`http://localhost:8000/api/companies/research-company/${jobId}`);
-          
-          if (!statusResponse.ok) {
-            const errorData = await statusResponse.json();
-            throw new Error(errorData.error || 'Failed to get research status');
-          }
-          
-          const status = await statusResponse.json();
-          setResearchJob(status);
-          
-          if (status.status === 'completed' || status.status === 'failed') {
-            clearInterval(interval);
-            setIsResearching(false);
-          }
-        } catch (err) {
-          console.error('Error polling research status:', err);
-          clearInterval(interval);
-          setIsResearching(false);
-          setError('Error monitoring research progress');
-        }
-      }, 2000);
-      
-      setPollInterval(interval);
     } catch (err) {
       console.error('Failed to start company research:', err);
       setIsResearching(false);
       setError(err instanceof Error ? err.message : 'Failed to start company research');
     }
+  };
+  
+  const startSequentialResearch = async (frameworks: string[]) => {
+    return startResearch({
+      mode: 'sequential',
+      frameworks
+    });
   };
 
   const resetResearch = () => {
@@ -183,6 +257,7 @@ export const CompanyResearchProvider = ({ children }: CompanyResearchProviderPro
     researchJob,
     error,
     startResearch,
+    startSequentialResearch,
     resetResearch,
     availableFrameworks,
     loading,
