@@ -5,7 +5,7 @@
  * Based on SquidAI documentation (hypothetical framework)
  */
 
-const { createBaseAdapter } = require('./baseAdapter');
+const { createBaseAdapter, adapterUtils } = require('./baseAdapter');
 const { squidAIImplementation } = require('./realImplementation');
 const { logger } = require('../index');
 
@@ -187,22 +187,12 @@ const generateFrameworkSpecificSteps = (companyName) => {
  */
 const executeRealImplementation = async (workflow, parameters) => {
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    
-    if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
-      const error = 'No valid OpenAI API key found. OpenAI keys should start with sk-. Please provide a valid API key.';
-      logger.error(error);
-      throw new Error(error);
-    }
+    adapterUtils.validateOpenAIApiKey(process.env.OPENAI_API_KEY);
     
     // Execute the real implementation
     const result = await squidAIImplementation.executeNetwork(workflow, parameters);
     
-    if (!result.success) {
-      const errorMessage = result.error || 'SquidAI execution failed. Please check the logs for more details.';
-      logger.error(errorMessage);
-      throw new Error(errorMessage);
-    }
+    adapterUtils.handleApiResult(result, 'SquidAI');
     
     const rawContent = result.rawContent || '';
     logger.info(`Processing raw content from SquidAI: ${rawContent.substring(0, 100)}...`);
@@ -210,69 +200,11 @@ const executeRealImplementation = async (workflow, parameters) => {
     const companyName = parameters.companyName || 'Unknown Company';
     const steps = generateFrameworkSpecificSteps(companyName);
     
-    const foundingYearMatch = rawContent.match(/founded in (\d{4})/i) || 
-                             rawContent.match(/founding year[:\s]+(\d{4})/i) ||
-                             rawContent.match(/established in (\d{4})/i);
+    const extractedInfo = adapterUtils.extractCompanyInfo(rawContent, companyName);
     
-    const locationMatch = rawContent.match(/headquartered in ([^\.]+)/i) || 
-                         rawContent.match(/headquarters[:\s]+([^\.]+)/i) ||
-                         rawContent.match(/based in ([^\.]+)/i);
+    const company = adapterUtils.createCompanyObject(extractedInfo, steps);
     
-    const focusAreaMatch = rawContent.match(/focuses on ([^\.]+)/i) || 
-                          rawContent.match(/focus area[:\s]+([^\.]+)/i) ||
-                          rawContent.match(/specializes in ([^\.]+)/i) ||
-                          rawContent.match(/industry[:\s]+([^\.]+)/i);
-    
-    const investorsMatch = rawContent.match(/investors include ([^\.]+)/i) || 
-                          rawContent.match(/backed by ([^\.]+)/i) ||
-                          rawContent.match(/investors[:\s]+([^\.]+)/i);
-    
-    const fundingMatch = rawContent.match(/raised (\$[0-9]+[MBT][^\.]+)/i) || 
-                        rawContent.match(/funding[:\s]+(\$[0-9]+[MBT][^\.]+)/i) ||
-                        rawContent.match(/secured (\$[0-9]+[MBT][^\.]+)/i);
-    
-    const newsMatch = rawContent.match(/recent news[:\s]+([^\.]+)/i) ||
-                     rawContent.match(/recent headlines[:\s]+([^\.]+)/i);
-    
-    const websiteMatch = rawContent.match(/website[:\s]+(https?:\/\/[^\s]+)/i) ||
-                        rawContent.match(/url[:\s]+(https?:\/\/[^\s]+)/i);
-    
-    const isPublic = rawContent.toLowerCase().includes('publicly traded') || 
-                    rawContent.toLowerCase().includes('public company') ||
-                    rawContent.toLowerCase().includes('stock symbol') ||
-                    rawContent.toLowerCase().includes('stock ticker');
-    
-    const stockSymbolMatch = rawContent.match(/stock symbol[:\s]+([A-Z]+)/i) ||
-                            rawContent.match(/ticker symbol[:\s]+([A-Z]+)/i) ||
-                            rawContent.match(/trades under the symbol[:\s]+([A-Z]+)/i) ||
-                            rawContent.match(/stock ticker[:\s]+([A-Z]+)/i);
-    
-    const company = {
-      name: companyName,
-      foundingYear: foundingYearMatch ? parseInt(foundingYearMatch[1]) : null,
-      location: locationMatch ? locationMatch[1].trim() : null,
-      focusArea: focusAreaMatch ? focusAreaMatch[1].trim() : null,
-      investors: investorsMatch ? investorsMatch[1].split(/,|\sand\s/).map(i => i.trim()) : [],
-      fundingAmount: fundingMatch ? fundingMatch[1].trim() : null,
-      newsHeadlines: newsMatch ? [newsMatch[1].trim()] : [],
-      websiteUrl: websiteMatch ? websiteMatch[1] : 
-                 `https://${companyName.toLowerCase().replace(/\s+/g, '')}.com`,
-      isPublic: isPublic,
-      stockSymbol: stockSymbolMatch ? stockSymbolMatch[1].trim() : null,
-      agentSteps: steps
-    };
-    
-    if (company.isPublic && company.stockSymbol) {
-      try {
-        const stockPriceService = require('../services/stockPriceService');
-        const stockData = await stockPriceService.getStockPrice(company.stockSymbol);
-        if (stockData) {
-          company.stockPrice = stockData;
-        }
-      } catch (stockError) {
-        logger.error(`Error fetching stock data: ${stockError.message}`);
-      }
-    }
+    await adapterUtils.fetchStockPrice(company);
     
     logger.info(`Successfully extracted company information for ${companyName}`);
     return [company];
