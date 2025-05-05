@@ -15,6 +15,8 @@ This platform allows you to:
 ## Features
 
 - **Multi-Framework Integration**: Seamlessly switch between CrewAI, SquidAI, LettaAI, AutoGen, and LangGraph
+- **Parallel and Sequential Research Workflows**: Run frameworks simultaneously or in sequence with data passing
+- **Framework Benchmarking and Comparison**: Evaluate frameworks against standard test cases
 - **Dynamic Scoring Model**: Configurable weights for different scoring criteria
 - **Public Data Sources**: Uses only publicly accessible information
 - **Modern Web Interface**: React-based UI with TailwindCSS styling
@@ -70,6 +72,27 @@ This platform allows you to:
 
 5. Open your browser and navigate to `http://localhost:5173`
 
+## Research Flows
+
+The platform supports multiple research flows:
+
+1. **Parallel Research**: Run multiple frameworks simultaneously on the same company
+2. **Sequential Research**: Run frameworks in sequence, passing data between them
+3. **Benchmark**: Evaluate frameworks against standard test cases
+
+See the [Research Flow Documentation](./docs/research-flow/README.md) for more details.
+
+## Benchmarking
+
+The platform includes a comprehensive benchmarking system to evaluate frameworks against standard test cases. It measures:
+
+1. **Execution Time**: How long each framework takes to complete research
+2. **Success Rate**: Percentage of test cases successfully completed
+3. **Data Completeness**: How complete the extracted company data is
+4. **Source Credibility**: Quality of sources used for research
+
+See the [Benchmarking Documentation](./docs/benchmarking/README.md) for more details.
+
 ## Documentation
 
 For detailed documentation, please see the [docs](./docs) directory:
@@ -78,6 +101,8 @@ For detailed documentation, please see the [docs](./docs) directory:
 - [Usage Guide](./docs/usage/README.md)
 - [Development Guide](./docs/development/README.md)
 - [API Documentation](./docs/api/README.md)
+- [Research Flow Documentation](./docs/research-flow/README.md)
+- [Benchmarking Documentation](./docs/benchmarking/README.md)
 - [Compliance with Public Data Policies](./docs/compliance/README.md)
 
 ## License

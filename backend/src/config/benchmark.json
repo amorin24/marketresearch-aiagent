@@ -1,0 +1,64 @@
+{
+  "testCases": [
+    {
+      "name": "large_fintech",
+      "companyName": "Square",
+      "description": "Large publicly traded fintech company"
+    },
+    {
+      "name": "startup_fintech",
+      "companyName": "Stripe",
+      "description": "Well-known private fintech company"
+    },
+    {
+      "name": "tech_giant",
+      "companyName": "Microsoft",
+      "description": "Large technology corporation"
+    },
+    {
+      "name": "recent_ipo",
+      "companyName": "Snowflake",
+      "description": "Company with recent IPO"
+    },
+    {
+      "name": "international",
+      "companyName": "Alibaba",
+      "description": "International company"
+    },
+    {
+      "name": "payment_processor",
+      "companyName": "PayPal",
+      "description": "Established payment processing company"
+    },
+    {
+      "name": "crypto",
+      "companyName": "Coinbase",
+      "description": "Cryptocurrency exchange platform"
+    }
+  ],
+  "metrics": {
+    "executionTime": {
+      "weight": 0.3,
+      "description": "Time taken to complete the research"
+    },
+    "dataCompleteness": {
+      "weight": 0.4,
+      "description": "Completeness of extracted company data"
+    },
+    "sourceCredibility": {
+      "weight": 0.3,
+      "description": "Credibility of sources used"
+    }
+  },
+  "sourceWeights": {
+    "yahooFinance": 1.0,
+    "businessInsider": 0.9,
+    "bloomberg": 0.9,
+    "financialTimes": 0.8,
+    "cnbc": 0.8,
+    "reuters": 0.8,
+    "wsj": 0.8,
+    "techCrunch": 0.7,
+    "other": 0.5
+  }
+}
