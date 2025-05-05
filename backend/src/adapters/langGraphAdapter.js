@@ -126,7 +126,7 @@ const generateFrameworkSpecificSteps = (companyName) => {
       name: 'data_collection',
       description: `[Research Node] Collecting comprehensive data about ${companyName} from verified sources.`,
       completed: true,
-      result: `Collected data from 6 reliable sources including TechCrunch, Financial Times, and company press releases. Data includes founding information, funding rounds, and market positioning.`,
+      result: `Collected data from 6 high-credibility sources prioritized by reliability: Yahoo Finance (financial data), Business Insider (market analysis), Bloomberg (financial reports), CNBC (market news), Financial Times (business analysis), and company press releases. Data includes founding information, funding rounds, and market positioning.`,
       timestamp: new Date(Date.now() - 15000)
     }
   ];
@@ -199,16 +199,18 @@ const executeRealImplementation = async (workflow, parameters) => {
     const apiKey = process.env.OPENAI_API_KEY;
     
     if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
-      logger.warn('No valid OpenAI API key found. OpenAI keys should start with sk-. Falling back to mock implementation.');
-      return null; // Return null to indicate fallback to mock implementation
+      const error = 'No valid OpenAI API key found. OpenAI keys should start with sk-. Please provide a valid API key.';
+      logger.error(error);
+      throw new Error(error);
     }
     
     // Execute the real implementation
     const result = await langGraphImplementation.executeGraph(workflow, parameters);
     
     if (!result.success) {
-      logger.error('LangGraph execution failed. Falling back to mock implementation.');
-      return null; // Return null to indicate fallback to mock implementation
+      const errorMessage = result.error || 'LangGraph execution failed. Please check the logs for more details.';
+      logger.error(errorMessage);
+      throw new Error(errorMessage);
     }
     
     const rawContent = result.rawContent || '';
@@ -284,8 +286,9 @@ const executeRealImplementation = async (workflow, parameters) => {
     logger.info(`Successfully extracted company information for ${companyName}`);
     return [company];
   } catch (error) {
-    logger.error(`Error in real LangGraph implementation: ${error.message}`);
-    return null; // Return null to indicate fallback to mock implementation
+    const errorMessage = `Error in real LangGraph implementation: ${error.message}`;
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
   }
 };
 

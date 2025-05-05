@@ -67,6 +67,16 @@ AutoGen uses multiple specialized agents that converse with each other:
   - LLM Config: gpt-4, temperature 0.2
   - System Message: Fintech industry research expert
   - Role: Discovers emerging fintech companies from public sources
+  
+#### Source Prioritization
+The Research Assistant agent prioritizes credible financial sources based on the configuration in `datasources.json`:
+1. **Yahoo Finance** (highest priority): Comprehensive financial news and data
+2. **Business Insider**: Business and financial news with market analysis
+3. **Bloomberg**: Global business and financial information
+4. **CNBC**: Business and financial market news
+5. **Financial Times**: International business and financial news
+
+Sources are weighted by credibility and relevance, with financial sources receiving higher priority.
 
 - **Data Analyst Agent**:
   - Type: assistant

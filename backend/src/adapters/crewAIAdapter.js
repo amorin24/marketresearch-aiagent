@@ -41,11 +41,37 @@ const createAgents = () => {
  * @returns {Object} Research agent
  */
 const createResearchAgent = () => {
+  let dataSources;
+  try {
+    dataSources = require('../config/datasources.json');
+  } catch (error) {
+    logger.warn('Could not load datasources.json, using default sources');
+    dataSources = {
+      sources: {
+        yahoo_finance: { enabled: true, weight: 5 },
+        business_insider: { enabled: true, weight: 4 },
+        bloomberg: { enabled: true, weight: 3 },
+        techcrunch: { enabled: true, weight: 2 },
+        linkedin: { enabled: true, weight: 1 }
+      }
+    };
+  }
+  
+  const prioritizedSources = Object.entries(dataSources.sources || {})
+    .filter(([_, config]) => config.enabled)
+    .sort((a, b) => b[1].weight - a[1].weight)
+    .map(([name]) => name);
+  
   return {
     name: 'Research Agent',
     role: 'Market Research Specialist',
-    goal: 'Discover companies from public sources',
-    tools: ['web_search', 'news_api']
+    goal: 'Discover companies from public sources using credible financial sources',
+    tools: ['web_search', 'news_api'],
+    prioritizedSources: prioritizedSources,
+    configuration: {
+      preferredSources: prioritizedSources.slice(0, 3), // Top 3 sources
+      sourcePrioritization: true
+    }
   };
 };
 
@@ -130,7 +156,7 @@ const generateFrameworkSpecificSteps = (companyName) => {
       name: 'source_evaluation',
       description: `Evaluating the credibility and recency of sources about ${companyName}.`,
       completed: true,
-      result: `Identified 3 reliable sources: TechCrunch (2 articles from last 6 months), LinkedIn company page (updated weekly), and a recent Yahoo Finance mention.`,
+      result: `Identified 4 reliable sources: Yahoo Finance (comprehensive financial data), Business Insider (market analysis), TechCrunch (industry news), and LinkedIn company page (professional profile).`,
       timestamp: new Date(Date.now() - 12000)
     }
   ];
@@ -195,16 +221,18 @@ const executeRealImplementation = async (workflow, parameters) => {
     const apiKey = process.env.OPENAI_API_KEY;
     
     if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey.includes('your_actual_openai_api_key_here') || !apiKey.startsWith('sk-')) {
-      logger.warn('No valid OpenAI API key found. OpenAI keys should start with sk-. Falling back to mock implementation.');
-      return null; // Return null to indicate fallback to mock implementation
+      const error = 'No valid OpenAI API key found. OpenAI keys should start with sk-. Please provide a valid API key.';
+      logger.error(error);
+      throw new Error(error);
     }
     
     // Execute the real implementation
     const result = await crewAIImplementation.executeCrew(workflow, parameters);
     
     if (!result.success) {
-      logger.error('CrewAI execution failed. Falling back to mock implementation.');
-      return null; // Return null to indicate fallback to mock implementation
+      const errorMessage = result.error || 'CrewAI execution failed. Please check the logs for more details.';
+      logger.error(errorMessage);
+      throw new Error(errorMessage);
     }
     
     const rawContent = result.rawContent || '';
@@ -280,8 +308,9 @@ const executeRealImplementation = async (workflow, parameters) => {
     logger.info(`Successfully extracted company information for ${companyName}`);
     return [company];
   } catch (error) {
-    logger.error(`Error in real CrewAI implementation: ${error.message}`);
-    return null; // Return null to indicate fallback to mock implementation
+    const errorMessage = `Error in real CrewAI implementation: ${error.message}`;
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
   }
 };
 

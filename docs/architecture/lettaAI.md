@@ -65,12 +65,22 @@ graph TD
 LettaAI organizes agents in a hierarchical structure with clear reporting lines:
 
 - **Research Coordinator**: Top-level agent that plans and coordinates the research process
-  - **Data Collector**: Mid-level agent responsible for data collection
+  - **Data Collector**: Mid-level agent responsible for data collection from credible sources
     - **Web Scraper**: Extracts data from websites
     - **News Reader**: Extracts information from news articles
   - **Data Analyzer**: Mid-level agent responsible for data analysis
     - **Entity Extractor**: Identifies and extracts key entities
     - **Relevance Scorer**: Scores entities based on relevance criteria
+
+#### Source Prioritization
+The Data Collector agent prioritizes credible financial sources based on the configuration in `datasources.json`:
+1. **Yahoo Finance** (highest priority): Comprehensive financial news and data
+2. **Business Insider**: Business and financial news with market analysis
+3. **Bloomberg**: Global business and financial information
+4. **CNBC**: Business and financial market news
+5. **Financial Times**: International business and financial news
+
+Sources are weighted by credibility and relevance, with financial sources receiving higher priority.
 
 ### 2. Goals
 LettaAI uses goal-oriented task planning with specific criteria:

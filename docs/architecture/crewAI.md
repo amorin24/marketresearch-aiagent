@@ -44,9 +44,19 @@ The central organizing structure in CrewAI. A crew consists of multiple agents w
 
 ### 2. Agents
 Specialized AI agents with defined roles, goals, and tools:
-- **Research Agent**: Discovers emerging fintech companies from public sources
+- **Research Agent**: Discovers companies from credible public sources with prioritization of financial sources
 - **Data Extraction Agent**: Extracts structured data about companies
 - **Analysis Agent**: Analyzes company data and determines relevance
+
+#### Source Prioritization
+The Research Agent prioritizes credible financial sources based on the configuration in `datasources.json`:
+1. **Yahoo Finance** (highest priority): Comprehensive financial news and data
+2. **Business Insider**: Business and financial news with market analysis
+3. **Bloomberg**: Global business and financial information
+4. **Financial Times**: International business and financial news
+5. **CNBC**: Business and financial market news
+
+Sources are weighted by credibility and relevance, with financial sources receiving higher priority.
 
 ### 3. Tasks
 Defined work items assigned to specific agents:

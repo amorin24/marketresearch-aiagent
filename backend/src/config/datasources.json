@@ -1,0 +1,107 @@
+{
+  "sources": {
+    "yahoo_finance": {
+      "enabled": true,
+      "weight": 5,
+      "description": "Comprehensive financial news and data source",
+      "url": "https://finance.yahoo.com",
+      "category": "financial",
+      "credibility": "high"
+    },
+    "business_insider": {
+      "enabled": true,
+      "weight": 4,
+      "description": "Business and financial news with market analysis",
+      "url": "https://www.businessinsider.com",
+      "category": "financial",
+      "credibility": "high"
+    },
+    "bloomberg": {
+      "enabled": true,
+      "weight": 4,
+      "description": "Global business and financial information provider",
+      "url": "https://www.bloomberg.com",
+      "category": "financial",
+      "credibility": "high"
+    },
+    "financial_times": {
+      "enabled": true,
+      "weight": 3,
+      "description": "International business and financial news",
+      "url": "https://www.ft.com",
+      "category": "financial",
+      "credibility": "high"
+    },
+    "cnbc": {
+      "enabled": true,
+      "weight": 3,
+      "description": "Business and financial market news",
+      "url": "https://www.cnbc.com",
+      "category": "financial",
+      "credibility": "high"
+    },
+    "techcrunch": {
+      "enabled": true,
+      "weight": 3,
+      "description": "Technology industry news, analysis, and startup coverage",
+      "url": "https://techcrunch.com",
+      "category": "technology",
+      "credibility": "medium"
+    },
+    "crunchbase": {
+      "enabled": true,
+      "weight": 2,
+      "description": "Company information database (public portions only)",
+      "url": "https://www.crunchbase.com",
+      "category": "business",
+      "credibility": "medium"
+    },
+    "linkedin": {
+      "enabled": true,
+      "weight": 2,
+      "description": "Professional networking platform with company profiles",
+      "url": "https://www.linkedin.com",
+      "category": "business",
+      "credibility": "medium"
+    },
+    "angellist": {
+      "enabled": true,
+      "weight": 2,
+      "description": "Platform for startups, angel investors, and job-seekers",
+      "url": "https://angel.co",
+      "category": "business",
+      "credibility": "medium"
+    },
+    "news": {
+      "enabled": true,
+      "weight": 1,
+      "description": "General news sources",
+      "category": "general",
+      "credibility": "variable"
+    }
+  },
+  "sourceCredibilityScoring": {
+    "criteria": [
+      {
+        "name": "Reputation",
+        "weight": 0.4,
+        "description": "Established reputation and credibility in the industry"
+      },
+      {
+        "name": "Accuracy",
+        "weight": 0.3,
+        "description": "Track record of accurate reporting and information"
+      },
+      {
+        "name": "Recency",
+        "weight": 0.2,
+        "description": "How recently the information was published"
+      },
+      {
+        "name": "Transparency",
+        "weight": 0.1,
+        "description": "Transparency about sources and methodology"
+      }
+    ]
+  }
+}

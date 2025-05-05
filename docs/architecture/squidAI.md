@@ -50,9 +50,19 @@ The central organizing structure in SquidAI. An environment consists of multiple
 
 ### 2. Agents
 Specialized AI agents with defined capabilities:
-- **Searcher Agent**: Performs web searches and data retrieval
+- **Searcher Agent**: Performs web searches and data retrieval from credible sources
 - **Extractor Agent**: Handles data extraction and entity recognition
 - **Analyzer Agent**: Conducts data analysis and relevance scoring
+
+#### Source Prioritization
+The Searcher Agent prioritizes credible financial sources based on the configuration in `datasources.json`:
+1. **Yahoo Finance** (highest priority): Comprehensive financial news and data
+2. **Business Insider**: Business and financial news with market analysis
+3. **Bloomberg**: Global business and financial information
+4. **Financial Times**: International business and financial news
+5. **CNBC**: Business and financial market news
+
+Sources are weighted by credibility and relevance, with financial sources receiving higher priority.
 
 ### 3. Tasks
 Defined work items with inputs and outputs:

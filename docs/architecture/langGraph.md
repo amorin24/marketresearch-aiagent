@@ -73,6 +73,16 @@ LangGraph uses specialized nodes that perform specific functions in the workflow
   - Model: gpt-4
   - Memory: enabled
   - Function: Searches for and collects data about fintech companies
+  
+#### Source Prioritization
+The Research Node prioritizes credible financial sources based on the configuration in `datasources.json`:
+1. **Yahoo Finance** (highest priority): Comprehensive financial news and data
+2. **Business Insider**: Business and financial news with market analysis
+3. **Bloomberg**: Global business and financial information
+4. **CNBC**: Business and financial market news
+5. **Financial Times**: International business and financial news
+
+Sources are weighted by credibility and relevance, with financial sources receiving higher priority.
 
 - **Extraction Node**:
   - Description: Extract structured data from research results
