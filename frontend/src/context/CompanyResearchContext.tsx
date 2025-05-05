@@ -157,8 +157,8 @@ export const CompanyResearchProvider = ({ children }: CompanyResearchProviderPro
       setResearchJob(response.data);
       setIsResearching(false);
       
-      if (!response.data) {
-        console.warn('Using mock data as fallback');
+      if (!response.data.jobId) {
+        console.warn('No job ID returned, research may not have started properly');
         
         const mockStatuses: Record<string, FrameworkStatus> = {};
         const mockResults: Record<string, Company> = {};
