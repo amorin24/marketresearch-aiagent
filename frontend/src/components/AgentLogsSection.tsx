@@ -5,8 +5,8 @@ interface AgentStep {
   name?: string;
   description?: string;
   completed?: boolean;
-  result?: string;
-  timestamp?: string | Date;
+  result?: string | null;
+  timestamp?: string | Date | null;
 }
 
 interface AgentLogsSectionProps {
