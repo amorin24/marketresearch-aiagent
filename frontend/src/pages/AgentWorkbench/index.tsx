@@ -6,6 +6,7 @@ import WorkflowVisualization from '../../components/WorkflowVisualization';
 import FrameworkExpander from '../../components/FrameworkExpander';
 import RawOutputSection from '../../components/RawOutputSection';
 import AgentLogsSection from '../../components/AgentLogsSection';
+import ErrorDisplay from '../../components/workflow/ErrorDisplay';
 
 const AgentWorkbench: React.FC = () => {
   const {
@@ -151,14 +152,11 @@ const AgentWorkbench: React.FC = () => {
           )}
         </div>
         
-        {error && (
-          <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md">
-            <div className="font-medium">Error:</div>
-            <pre className="mt-1 text-sm whitespace-pre-wrap font-mono overflow-auto max-h-32">
-              {typeof error === 'object' ? JSON.stringify(error, null, 2) : error}
-            </pre>
-          </div>
-        )}
+        <ErrorDisplay 
+          error={error} 
+          retry={handleStartResearch} 
+          className="mt-4"
+        />
       </div>
       
       {/* Results section */}
@@ -210,6 +208,14 @@ const AgentWorkbench: React.FC = () => {
                           error={status?.error}
                           onCopy={copyToClipboard}
                         />
+                        
+                        {status?.error && (
+                          <ErrorDisplay 
+                            error={status.error} 
+                            retry={() => handleStartResearch()} 
+                            className="mt-4"
+                          />
+                        )}
                       </div>
                     </div>
                   </div>
