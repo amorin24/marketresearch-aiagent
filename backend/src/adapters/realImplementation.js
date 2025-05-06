@@ -108,7 +108,10 @@ const implementationUtils = {
       });
       
       if (!apiResult.success) {
-        throw new Error(apiResult.error);
+        const errorType = apiResult.errorType || 'API_ERROR';
+        const error = new Error(apiResult.error);
+        error.type = errorType;
+        throw error;
       }
       
       const response = apiResult.response;
@@ -124,8 +127,39 @@ const implementationUtils = {
         rawContent: researchContent
       };
     } catch (error) {
-      logger.error(`Error executing ${frameworkName}: ${error.message}`);
-      return { success: false, error: error.message };
+      let errorType = 'EXECUTION_ERROR';
+      let errorDetails = error.message;
+      
+      if (error.message.includes('rate limit') || error.message.includes('429')) {
+        errorType = 'RATE_LIMIT_ERROR';
+        errorDetails = `Rate limit exceeded for ${frameworkName}. Please try again later or reduce request frequency.`;
+      } else if (error.message.includes('authentication') || error.message.includes('api key') || error.message.includes('401')) {
+        errorType = 'AUTH_ERROR';
+        errorDetails = `Authentication failed for ${frameworkName}. Please check your API key.`;
+      } else if (error.message.includes('timeout') || error.message.includes('timed out')) {
+        errorType = 'TIMEOUT_ERROR';
+        errorDetails = `Request timed out for ${frameworkName}. The operation took too long to complete.`;
+      } else if (error.message.includes('network') || error.message.includes('ECONNREFUSED') || error.message.includes('ENOTFOUND')) {
+        errorType = 'NETWORK_ERROR';
+        errorDetails = `Network error occurred while executing ${frameworkName}. Please check your internet connection.`;
+      }
+      
+      const errorObject = {
+        success: false,
+        error: `${frameworkName} execution failed: ${errorDetails}`,
+        errorType: errorType,
+        timestamp: new Date().toISOString(),
+        frameworkName: frameworkName,
+        containerType: containerType,
+        ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+      };
+      
+      logger.error(`Error executing ${frameworkName} (${errorType}): ${errorDetails}`);
+      if (error.stack && process.env.NODE_ENV === 'development') {
+        logger.debug(`Stack trace: ${error.stack}`);
+      }
+      
+      return errorObject;
     }
   }
 };
