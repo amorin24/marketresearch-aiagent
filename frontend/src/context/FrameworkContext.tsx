@@ -37,57 +37,104 @@ export const FrameworkProvider = ({ children }: FrameworkProviderProps) => {
     const fetchFrameworks = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('http://localhost:8000/api/frameworks');
+        setError(null);
+        
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+        const response = await fetch(`${apiUrl}/api/frameworks`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch frameworks: ${response.status} ${response.statusText}`);
+        }
+        
         const data = await response.json();
         setFrameworks(data);
       } catch (err) {
-        setError('Failed to load frameworks');
-        console.error(err);
+        setError(`Failed to load frameworks: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        console.error('Framework loading error:', err);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchFrameworks();
-  }, []);
+  }, [currentFramework]);
 
   const loadCompanies = async (frameworkName: string) => {
     try {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch(`http://localhost:8000/api/companies/discover`, {
+      console.log(`Loading companies for framework: ${frameworkName}`);
+      
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const response = await fetch(`${apiUrl}/api/companies/discover`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ framework: frameworkName }),
+        body: JSON.stringify({ 
+          framework: frameworkName,
+          parameters: { companyName: 'Apple' } 
+        }),
       });
       
-      const { jobId } = await response.json();
+      if (!response.ok) {
+        const errorText = response.statusText || 'Unknown error';
+        throw new Error(`API error: ${response.status} ${errorText}`);
+      }
+      
+      const responseData = await response.json();
+      const jobId = responseData.jobId;
+      
+      if (!jobId) {
+        throw new Error('No job ID returned from API');
+      }
+      
+      console.log(`Job ID received: ${jobId}`);
       
       const pollInterval = setInterval(async () => {
-        const statusResponse = await fetch(`http://localhost:8000/api/companies/discover/${jobId}`);
-        const status = await statusResponse.json();
-        
-        if (status.status === 'completed') {
-          clearInterval(pollInterval);
+        try {
+          const statusResponse = await fetch(`${apiUrl}/api/companies/discover/${jobId}`);
           
-          const companiesResponse = await fetch('http://localhost:8000/api/companies');
-          const companiesData = await companiesResponse.json();
+          if (!statusResponse.ok) {
+            const errorText = statusResponse.statusText || 'Unknown error';
+            throw new Error(`Status API error: ${statusResponse.status} ${errorText}`);
+          }
           
-          setCompanies(companiesData);
-          setIsLoading(false);
-        } else if (status.status === 'failed') {
+          const status = await statusResponse.json();
+          console.log(`Job status: ${status.status}`);
+          
+          if (status.status === 'completed') {
+            clearInterval(pollInterval);
+            
+            const companiesResponse = await fetch(`${apiUrl}/api/companies`);
+            
+            if (!companiesResponse.ok) {
+              const errorText = companiesResponse.statusText || 'Unknown error';
+              throw new Error(`Companies API error: ${companiesResponse.status} ${errorText}`);
+            }
+            
+            const companiesData = await companiesResponse.json();
+            
+            setCompanies(companiesData);
+            setIsLoading(false);
+          } else if (status.status === 'failed') {
+            clearInterval(pollInterval);
+            setError(status.error || 'Failed to discover companies');
+            setIsLoading(false);
+          }
+        } catch (pollError) {
           clearInterval(pollInterval);
-          setError(status.error || 'Failed to discover companies');
+          const errorMessage = pollError instanceof Error ? pollError.message : 'Unknown error';
+          console.error('Job polling error:', pollError);
+          setError(`Error polling job status: ${errorMessage}`);
           setIsLoading(false);
         }
       }, 2000);
-      
     } catch (err) {
-      setError('Failed to load companies');
-      console.error(err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Company loading error:', err);
+      setError(`Failed to load companies: ${errorMessage}`);
       setIsLoading(false);
     }
   };

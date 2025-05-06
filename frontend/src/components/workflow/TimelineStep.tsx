@@ -6,14 +6,15 @@ interface TimelineStepProps {
   colorScheme: {
     accent: string;
   };
-  formatTimestamp: (timestamp: string | null) => string;
-  extractAgentInfo: (description: string) => { agentName: string | null; stepDescription: string };
+  formatTimestamp: (_timestamp: string | null) => string;
+  extractAgentInfo: (_description: string) => { agentName: string | null; stepDescription: string };
   index: number;
 }
 
 const TimelineStep: React.FC<TimelineStepProps> = ({
   step,
   colorScheme,
+  // formatTimestamp and extractAgentInfo are required props
   formatTimestamp,
   extractAgentInfo,
   index

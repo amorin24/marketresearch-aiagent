@@ -582,10 +582,256 @@ Error responses include a JSON object with an `error` field:
 }
 ```
 
+### Benchmarking
+
+#### Start Framework Benchmark
+
+```
+POST /frameworks/benchmark
+```
+
+Starts a benchmark process for the specified frameworks using predefined test cases.
+
+**Request Body**
+
+```json
+{
+  "frameworks": ["crewAI", "squidAI", "lettaAI", "autoGen", "langGraph"],
+  "options": {
+    "parallel": true,
+    "parallelTestCases": false
+  }
+}
+```
+
+**Response**
+
+```json
+{
+  "jobId": "benchmark-550e8400-e29b-41d4-a716-446655440000",
+  "status": "benchmark_started"
+}
+```
+
+#### Get Benchmark Status
+
+```
+GET /frameworks/benchmark/:jobId
+```
+
+Returns the status of a benchmark job.
+
+**Parameters**
+
+- `jobId` (path parameter): The unique identifier of the benchmark job
+
+**Response**
+
+```json
+{
+  "id": "benchmark-550e8400-e29b-41d4-a716-446655440000",
+  "status": "completed",
+  "startTime": "2023-11-15T12:30:45Z",
+  "endTime": "2023-11-15T12:45:12Z",
+  "error": null,
+  "frameworks": {
+    "crewAI": {
+      "totalTests": 5,
+      "successfulTests": 5,
+      "averageExecutionTime": 12.3,
+      "results": [
+        {
+          "testCase": "Apple",
+          "success": true,
+          "executionTime": 10.2,
+          "companies": [
+            {
+              "name": "Apple Inc.",
+              "foundingYear": 1976,
+              "location": "Cupertino, CA",
+              "focusArea": "Technology",
+              "investors": ["..."],
+              "fundingAmount": "Public",
+              "newsHeadlines": ["..."],
+              "websiteUrl": "https://apple.com",
+              "stockPrice": "187.43",
+              "stockSymbol": "AAPL"
+            }
+          ]
+        },
+        // Additional test results
+      ]
+    },
+    "squidAI": {
+      // Similar structure to crewAI
+    }
+  },
+  "totalExecutionTime": 875.2
+}
+```
+
+### Research
+
+#### Start Sequential Research
+
+```
+POST /research/sequential
+```
+
+Starts a sequential research process where frameworks are executed in sequence, with each framework potentially using data from previous frameworks.
+
+**Request Body**
+
+```json
+{
+  "companyName": "Apple",
+  "frameworks": ["crewAI", "squidAI", "lettaAI"],
+  "options": {
+    "userEmail": "user@example.com",
+    "dataPassingMode": "full"
+  }
+}
+```
+
+**Response**
+
+```json
+{
+  "jobId": "sequential-550e8400-e29b-41d4-a716-446655440000",
+  "status": "research_started"
+}
+```
+
+#### Get Sequential Research Status
+
+```
+GET /research/sequential/:jobId
+```
+
+Returns the status of a sequential research job.
+
+**Parameters**
+
+- `jobId` (path parameter): The unique identifier of the sequential research job
+
+**Response**
+
+```json
+{
+  "id": "sequential-550e8400-e29b-41d4-a716-446655440000",
+  "companyName": "Apple",
+  "status": "completed",
+  "startTime": "2023-11-15T12:30:45Z",
+  "endTime": "2023-11-15T12:45:12Z",
+  "error": null,
+  "sequence": ["crewAI", "squidAI", "lettaAI"],
+  "currentFramework": "lettaAI",
+  "completedFrameworks": ["crewAI", "squidAI"],
+  "results": {
+    "crewAI": {
+      // Framework results
+    },
+    "squidAI": {
+      // Framework results
+    },
+    "lettaAI": {
+      // Framework results
+    }
+  }
+}
+```
+
+## Error Handling
+
+All API endpoints return appropriate HTTP status codes:
+
+- `200 OK`: The request was successful
+- `400 Bad Request`: The request was invalid
+- `404 Not Found`: The requested resource was not found
+- `429 Too Many Requests`: Rate limit exceeded
+- `500 Internal Server Error`: An error occurred on the server
+
+Error responses include a JSON object with detailed error information:
+
+```json
+{
+  "status": "error",
+  "statusCode": 429,
+  "message": "Rate limit exceeded. Please try again later.",
+  "retryAfter": 60
+}
+```
+
+### Common Error Types
+
+- **ValidationError**: Invalid input data (400)
+- **NotFoundError**: Resource not found (404)
+- **RateLimitError**: Rate limit exceeded (429)
+- **ExternalServiceError**: Error from external service (502)
+- **ServiceUnavailableError**: Service temporarily unavailable (503)
+
+### Rate Limit Handling
+
+The platform implements rate limiting for OpenAI API calls with exponential backoff and retry logic. When rate limits are encountered:
+
+1. The system will automatically retry with exponential backoff
+2. If all retries fail, a 429 error is returned with a `retryAfter` value
+3. Clients should respect the `retryAfter` header and wait before retrying
+
 ## Rate Limiting
 
-Currently, there is no rate limiting implemented. In a production environment, you should consider implementing rate limiting to prevent abuse.
+The API implements rate limiting to prevent abuse:
+
+- **Global Rate Limit**: 100 requests per minute per IP address
+- **Framework-specific Rate Limits**: Varies by framework based on underlying API constraints
+- **OpenAI API Rate Limits**: Handled automatically with retry logic
+
+When rate limits are exceeded, the API returns a 429 status code with a `Retry-After` header indicating how long to wait before retrying.
 
 ## Versioning
 
 The API does not currently use versioning. Future versions may include a version prefix in the URL path.
+
+## Framework Adapters
+
+The platform includes adapters for multiple AI agent frameworks:
+
+### CrewAI
+
+CrewAI is a framework for orchestrating role-playing autonomous AI agents. The adapter implements:
+
+- Multi-agent collaboration with specialized roles
+- Sequential and parallel task execution
+- Memory and context sharing between agents
+
+### SquidAI
+
+SquidAI is a framework focused on distributed AI agent workflows. The adapter implements:
+
+- Distributed task processing
+- Specialized research capabilities
+- Adaptive learning from previous research
+
+### LettaAI
+
+LettaAI is a framework for lightweight, efficient AI agents. The adapter implements:
+
+- Resource-efficient agent execution
+- Streamlined research workflows
+- Optimized for speed and accuracy
+
+### AutoGen
+
+AutoGen is a framework for building conversational AI agents. The adapter implements:
+
+- Multi-agent conversations
+- Specialized research agents
+- Flexible conversation patterns
+
+### LangGraph/LangChain
+
+LangGraph is a framework for building stateful, multi-agent workflows using LangChain. The adapter implements:
+
+- Graph-based workflow execution
+- State management between steps
+- Integration with LangChain components

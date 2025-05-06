@@ -84,9 +84,20 @@ class ServiceUnavailableError extends AppError {
  * Error for external service failures
  */
 class ExternalServiceError extends AppError {
-  constructor(message) {
-    super(message, 502);
+  constructor(message, statusCode = 502) {
+    super(message, statusCode);
     this.name = 'ExternalServiceError';
+  }
+}
+
+/**
+ * Error for rate limiting from external services
+ */
+class RateLimitError extends ExternalServiceError {
+  constructor(message, retryAfter = null) {
+    super(message, 429);
+    this.name = 'RateLimitError';
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -133,16 +144,12 @@ const sanitizeErrorMessage = (err) => {
  * @param {Function} next - Express next function
  */
 const globalErrorHandler = (err, req, res, next) => {
-  if (req.url.includes('/api/companies/discover/undefined')) {
-    return res.status(400).json({
-      status: 'error',
-      statusCode: 400,
-      message: 'Invalid job ID: undefined is not a valid job identifier'
-    });
-  }
-  
   if (!err) {
     err = new Error('Unknown error occurred');
+  }
+  
+  if (req.url.includes('/api/companies/discover/') && req.url.includes('undefined')) {
+    err = new ValidationError('Invalid job ID: undefined is not a valid job identifier');
   }
   
   let statusCode = err.statusCode || 500;
@@ -156,18 +163,37 @@ const globalErrorHandler = (err, req, res, next) => {
   }
   
   if (!(err instanceof AppError)) {
-    const message = err.message || 'Internal Server Error';
-    err = new AppError(message, statusCode);
+    // Check for rate limiting errors from external services
+    if (err.message && (
+      err.message.includes('rate limit') || 
+      err.message.includes('too many requests') || 
+      err.message.toLowerCase().includes('429')
+    )) {
+      err = new RateLimitError(
+        'Rate limit exceeded. Please try again later.',
+        err.headers?.['retry-after'] || null
+      );
+    } else {
+      const message = err.message || 'Internal Server Error';
+      err = new AppError(message, statusCode);
+    }
   }
   
   const sanitizedMessage = sanitizeErrorMessage(err);
   
-  res.status(statusCode).json({
+  const responseBody = {
     status: 'error',
-    statusCode,
+    statusCode: err.statusCode,
     message: sanitizedMessage,
     ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
-  });
+  };
+  
+  if (err instanceof RateLimitError && err.retryAfter) {
+    res.set('Retry-After', err.retryAfter);
+    responseBody.retryAfter = err.retryAfter;
+  }
+  
+  res.status(err.statusCode).json(responseBody);
 };
 
 /**
@@ -215,6 +241,7 @@ module.exports = {
   ForbiddenError,
   ServiceUnavailableError,
   ExternalServiceError,
+  RateLimitError,
   asyncHandler,
   sanitizeErrorMessage,
   globalErrorHandler,

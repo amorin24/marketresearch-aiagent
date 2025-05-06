@@ -1,9 +1,10 @@
 import React from 'react';
 
 interface FrameworkHeaderProps {
-  frameworkName: string; // Keeping for future use
+  // frameworkName is kept for future use but marked as optional to avoid linting errors
+  frameworkName?: string;
   displayName: string;
-  status?: string; // Used in getStatusBadge
+  status?: string;
   colorScheme: {
     secondary: string;
     accent: string;

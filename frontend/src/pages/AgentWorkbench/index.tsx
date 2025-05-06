@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useCompanyResearch } from '../../context/CompanyResearchContext';
 import { useDeveloperMode } from '../../context/DeveloperModeContext';
 import EnhancedFrameworkSelector from '../../components/EnhancedFrameworkSelector';
-import JsonDownloadButton from '../../components/JsonDownloadButton';
 import WorkflowVisualization from '../../components/WorkflowVisualization';
+import FrameworkExpander from '../../components/FrameworkExpander';
+import RawOutputSection from '../../components/RawOutputSection';
+import AgentLogsSection from '../../components/AgentLogsSection';
+import ErrorDisplay from '../../components/workflow/ErrorDisplay';
 
 const AgentWorkbench: React.FC = () => {
   const {
@@ -149,14 +152,11 @@ const AgentWorkbench: React.FC = () => {
           )}
         </div>
         
-        {error && (
-          <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md">
-            <div className="font-medium">Error:</div>
-            <pre className="mt-1 text-sm whitespace-pre-wrap font-mono overflow-auto max-h-32">
-              {typeof error === 'object' ? JSON.stringify(error, null, 2) : error}
-            </pre>
-          </div>
-        )}
+        <ErrorDisplay 
+          error={error} 
+          retry={handleStartResearch} 
+          className="mt-4"
+        />
       </div>
       
       {/* Results section */}
@@ -173,41 +173,12 @@ const AgentWorkbench: React.FC = () => {
                 className={`border rounded-lg overflow-hidden ${getStatusColor(frameworkName)}`}
               >
                 {/* Framework header */}
-                <div 
-                  className="p-4 flex justify-between items-center cursor-pointer"
-                  onClick={() => toggleFrameworkExpand(frameworkName)}
-                >
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                      <span className="font-bold text-blue-700">{frameworkName.charAt(0)}</span>
-                    </div>
-                    <h3 className="text-xl font-bold">{frameworkName}</h3>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    {status && (
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        status.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        status.status === 'running' ? 'bg-yellow-100 text-yellow-800' :
-                        status.status === 'pending' ? 'bg-blue-100 text-blue-800' :
-                        status.status === 'failed' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {status.status}
-                      </span>
-                    )}
-                    
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className={`h-5 w-5 transition-transform ${expandedFrameworks.includes(frameworkName) ? 'transform rotate-180' : ''}`} 
-                      fill="none" 
-                      viewBox="0 0 24 24" 
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
+                <FrameworkExpander
+                  frameworkName={frameworkName}
+                  isExpanded={expandedFrameworks.includes(frameworkName)}
+                  status={status?.status}
+                  onToggle={() => toggleFrameworkExpand(frameworkName)}
+                />
                 
                 {/* Expanded content */}
                 {expandedFrameworks.includes(frameworkName) && (
@@ -223,92 +194,28 @@ const AgentWorkbench: React.FC = () => {
                         )}
                       </div>
                       
-                      {/* Right column: Raw output */}
+                      {/* Right column: Raw output and Agent logs */}
                       <div className={compactView ? 'col-span-2' : ''}>
-                        <div className="flex justify-between items-center mb-3">
-                          <h4 className="text-lg font-medium">Raw Output</h4>
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => copyToClipboard(result)}
-                              className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-gray-700 bg-gray-100 hover:bg-gray-200"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                              </svg>
-                              Copy
-                            </button>
-                            
-                            {result && (
-                              <JsonDownloadButton
-                                data={result as unknown as Record<string, unknown>}
-                                filename={`${frameworkName}-${companyName}-result`}
-                              />
-                            )}
-                          </div>
-                        </div>
+                        <RawOutputSection
+                          result={result}
+                          companyName={companyName}
+                          frameworkName={frameworkName}
+                          onCopy={copyToClipboard}
+                        />
                         
-                        {result ? (
-                          <div className="bg-gray-50 rounded-md p-4 overflow-auto max-h-96">
-                            <pre className="text-xs whitespace-pre-wrap font-mono text-gray-800">
-                              {JSON.stringify(result, null, 2)}
-                            </pre>
-                          </div>
-                        ) : (
-                          <p className="text-gray-500">No results available.</p>
+                        <AgentLogsSection
+                          steps={steps}
+                          error={status?.error}
+                          onCopy={copyToClipboard}
+                        />
+                        
+                        {status?.error && (
+                          <ErrorDisplay 
+                            error={status.error} 
+                            retry={() => handleStartResearch()} 
+                            className="mt-4"
+                          />
                         )}
-                        
-                        {/* Agent logs */}
-                        <div className="mt-4">
-                          <div className="flex justify-between items-center mb-3">
-                            <h4 className="text-lg font-medium">Agent Logs</h4>
-                            {steps.length > 0 && (
-                              <button
-                                onClick={() => copyToClipboard(steps)}
-                                className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-gray-700 bg-gray-100 hover:bg-gray-200"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                </svg>
-                                Copy Logs
-                              </button>
-                            )}
-                          </div>
-                          {status?.error ? (
-                            <div className="bg-red-50 text-red-700 p-3 rounded-md">
-                              <div className="font-medium">Error:</div>
-                              <pre className="mt-1 text-sm whitespace-pre-wrap font-mono overflow-auto max-h-32">
-                                {typeof status.error === 'object' ? JSON.stringify(status.error, null, 2) : status.error}
-                              </pre>
-                            </div>
-                          ) : steps.length > 0 ? (
-                            <div className="bg-gray-50 rounded-md p-4 overflow-auto max-h-96">
-                              {steps.map((step, index) => (
-                                <div key={index} className="mb-4 pb-2 border-b border-gray-200 last:border-0">
-                                  <div className="flex justify-between items-start">
-                                    <div className="flex items-start">
-                                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-800 text-xs font-medium mr-2">
-                                        {index + 1}
-                                      </span>
-                                      <span className="font-medium">{step.name || step.description}</span>
-                                    </div>
-                                    {step.timestamp && (
-                                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                        {new Date(step.timestamp).toLocaleTimeString()}
-                                      </span>
-                                    )}
-                                  </div>
-                                  {step.result && (
-                                    <div className="mt-2 ml-8 p-2 text-sm text-gray-700 border-l-2 border-blue-200 bg-blue-50 rounded-r-md font-mono whitespace-pre-wrap">
-                                      {step.result}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-gray-500">No agent logs available.</p>
-                          )}
-                        </div>
                       </div>
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { Framework, ResearchJob, FrameworkStatus, Company } from '../types';
+import { Framework, ResearchJob } from '../types';
 import axios from 'axios';
 
 interface CompanyResearchContextType {
@@ -56,30 +56,19 @@ export const CompanyResearchProvider = ({ children }: CompanyResearchProviderPro
     const fetchFrameworks = async () => {
       try {
         setLoading(true);
-        console.log('Using mock framework data');
+        setError(null);
         
-        // Use mock data for development until backend is ready
-        const mockFrameworks = [
-          { name: 'crewAI', description: 'CrewAI Framework', version: '1.0.0' },
-          { name: 'squidAI', description: 'SquidAI Framework', version: '1.0.0' },
-          { name: 'lettaAI', description: 'LettaAI Framework', version: '1.0.0' },
-          { name: 'autoGen', description: 'AutoGen Framework', version: '1.0.0' },
-          { name: 'langGraph', description: 'LangGraph Framework', version: '1.0.0' }
-        ];
-        
-        setAvailableFrameworks(mockFrameworks);
-        
-        /* Real API implementation - commented out until backend is ready
-        console.log('Fetching frameworks...');
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
         const response = await fetch(`${apiUrl}/api/frameworks`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch frameworks: ${response.status} ${response.statusText}`);
+        }
+        
         const data = await response.json();
-        console.log('Frameworks fetched:', data);
         setAvailableFrameworks(data);
-        */
       } catch (err) {
-        console.error('Failed to load frameworks:', err);
-        setError('Failed to load frameworks');
+        setError(err instanceof Error ? err.message : 'Failed to load frameworks');
       } finally {
         setLoading(false);
       }
@@ -97,17 +86,11 @@ export const CompanyResearchProvider = ({ children }: CompanyResearchProviderPro
   }, [pollInterval]);
 
   const toggleFramework = (frameworkName: string) => {
-    console.log('Toggling framework:', frameworkName);
     setSelectedFrameworks(prev => {
-      console.log('Previous selectedFrameworks:', prev);
       if (prev.includes(frameworkName)) {
-        const newFrameworks = prev.filter(f => f !== frameworkName);
-        console.log('New selectedFrameworks (after removal):', newFrameworks);
-        return newFrameworks;
+        return prev.filter(f => f !== frameworkName);
       } else {
-        const newFrameworks = [...prev, frameworkName];
-        console.log('New selectedFrameworks (after addition):', newFrameworks);
-        return newFrameworks;
+        return [...prev, frameworkName];
       }
     });
   };
@@ -137,12 +120,10 @@ export const CompanyResearchProvider = ({ children }: CompanyResearchProviderPro
       setIsResearching(true);
       setError(null);
       
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
       const endpoint = options?.mode === 'sequential' 
         ? `${apiUrl}/api/research/sequential` 
         : `${apiUrl}/api/research/parallel`;
-      
-      console.log(`Starting research using endpoint: ${endpoint}`);
       
       const response = await axios.post(endpoint, {
         companyName,
@@ -153,74 +134,12 @@ export const CompanyResearchProvider = ({ children }: CompanyResearchProviderPro
         }
       });
       
-      console.log('Research response:', response.data);
+      if (!response.data || !response.data.jobId) {
+        throw new Error('Invalid response from server: No job ID returned');
+      }
+      
       setResearchJob(response.data);
       setIsResearching(false);
-      
-      if (!response.data.jobId) {
-        console.warn('No job ID returned, research may not have started properly');
-        
-        const mockStatuses: Record<string, FrameworkStatus> = {};
-        const mockResults: Record<string, Company> = {};
-        
-        frameworksToUse.forEach(fw => {
-          mockStatuses[fw] = { 
-            status: 'completed',
-            progress: 100,
-            steps: [
-              {
-                id: 1,
-                name: 'Initialize',
-                description: 'Initialize research process',
-                completed: true,
-                result: 'Success',
-                timestamp: new Date().toISOString()
-              },
-              {
-                id: 2,
-                name: 'Research',
-                description: 'Gather company information',
-                completed: true,
-                result: 'Found company data',
-                timestamp: new Date().toISOString()
-              },
-              {
-                id: 3,
-                name: 'Score',
-                description: 'Calculate company score',
-                completed: true,
-                result: 'Score calculated',
-                timestamp: new Date().toISOString()
-              }
-            ],
-            error: null
-          };
-          mockResults[fw] = {
-            id: `mock-${fw}-${Date.now()}`,
-            name: companyName,
-            score: Math.floor(Math.random() * 100),
-            summary: `${fw} analysis of ${companyName}`,
-            scoreBreakdown: {
-              fundingScore: Math.floor(Math.random() * 30),
-              buzzScore: Math.floor(Math.random() * 30),
-              relevanceScore: Math.floor(Math.random() * 40),
-              totalScore: Math.floor(Math.random() * 100)
-            }
-          };
-        });
-        
-        setResearchJob({
-          id: 'mock-job-id',
-          status: 'completed',
-          companyName,
-          frameworks: frameworksToUse,
-          frameworkStatuses: mockStatuses,
-          frameworkResults: mockResults,
-          startTime: new Date().toISOString(),
-          endTime: new Date().toISOString(),
-          error: null
-        });
-      }
     } catch (err) {
       console.error('Failed to start company research:', err);
       setIsResearching(false);
